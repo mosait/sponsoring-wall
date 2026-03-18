@@ -15,11 +15,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Listen for new sponsors - ONLY via DB CDC (single source of truth, no duplicates)
+// Listen for sponsor changes via DB CDC (INSERT, UPDATE, DELETE)
 export const subscribeToSponsors = (callback) => {
     const dbChannel = supabase
         .channel('public:sponsors_cdc')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sponsors' }, (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, (payload) => {
             callback(payload);
         })
         .subscribe();

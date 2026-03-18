@@ -1,392 +1,402 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, LayoutGrid, Euro, Heart, Target, Sparkles } from 'lucide-react';
+import { Users, Euro, Heart, Target, Sparkles } from 'lucide-react';
 import { supabase, subscribeToSponsors } from '../lib/supabaseClient';
-import StatsSidebar from '../components/StatsSidebar';
 import SajadahElement from '../components/SajadahElement';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
-        totalSponsors: 0,
-        totalSqMeters: 0,
-        totalAmount: 0,
-        bookedIndices: [],
+        totalSponsors: 0, totalSqMeters: 0, totalAmount: 0,
+        totalAmountCash: 0, bookedIndices: [],
     });
     const [chatMessages, setChatMessages] = useState([]);
     const [milestoneCelebration, setMilestoneCelebration] = useState(null);
+    const [pricePerUnit, setPricePerUnit] = useState(15);
+    const [dashboardLocked, setDashboardLocked] = useState(false);
     const lastProgressRef = useRef(0);
+    const carpetScrollRef = useRef(null);
+
+    // Queue für verzögertes Anzeigen
+    const incomingQueueRef = useRef([]);
+    const queueTimerRef = useRef(null);
 
     const BASE_GOAL = 710;
-    const COLS = 10;
-    const ROW_BLOCK = COLS * 2;
+    const COLS = 40;
+
+    // Verarbeite Queue mit 1 Sek Abstand
+    const processQueue = () => {
+        if (incomingQueueRef.current.length === 0) {
+            queueTimerRef.current = null;
+            return;
+        }
+        const next = incomingQueueRef.current.shift();
+        setChatMessages(prev => [next, ...prev].slice(0, 12));
+        queueTimerRef.current = setTimeout(processQueue, 1000);
+    };
+
+    const addToIncomingQueue = (msg) => {
+        incomingQueueRef.current.push(msg);
+        if (!queueTimerRef.current) {
+            processQueue();
+        }
+    };
 
     const triggerMilestoneConfetti = () => {
-        const count = 300;
-        const defaults = { origin: { y: 0.7 } };
-        function fire(ratio, opts) {
-            confetti({ ...defaults, ...opts, particleCount: Math.floor(count * ratio) });
+        const count = 800;
+        const defaults = { origin: { y: 0.6 } };
+        function fire(ratio, opts) { confetti({ ...defaults, ...opts, particleCount: Math.floor(count * ratio) }); }
+        fire(0.25, { spread: 40, startVelocity: 70 });
+        fire(0.2, { spread: 80 });
+        fire(0.35, { spread: 130, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 150, startVelocity: 30, decay: 0.92, scalar: 1.4 });
+        fire(0.1, { spread: 160, startVelocity: 60 });
+        setTimeout(() => {
+            fire(0.3, { spread: 60, startVelocity: 80, origin: { x: 0.1, y: 0.5 } });
+            fire(0.3, { spread: 60, startVelocity: 80, origin: { x: 0.9, y: 0.5 } });
+        }, 400);
+        setTimeout(() => {
+            fire(0.4, { spread: 100, startVelocity: 60, origin: { x: 0.5, y: 0.8 } });
+        }, 800);
+    };
+
+    const scrollToBoundary = () => {
+        if (!carpetScrollRef.current) return;
+        const container = carpetScrollRef.current;
+        const totalHeight = container.scrollHeight;
+        const viewHeight = container.clientHeight;
+        const rowHeight = totalHeight / Math.ceil(BASE_GOAL / COLS);
+        const bookedRows = Math.floor(stats.bookedIndices.length / COLS);
+        const targetScroll = Math.max(0, (bookedRows - Math.floor(viewHeight / rowHeight) + 2) * rowHeight);
+        container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    };
+
+    // Re-fetch all stats from DB (used for UPDATE/DELETE)
+    const refetchStats = async () => {
+        const { data, error } = await supabase
+            .from('sponsors_public')
+            .select('id,full_name,sq_meters,is_anonymous,total_amount,is_cash,created_at')
+            .order('created_at', { ascending: false });
+
+        if (data && !error) {
+            const totalSq = data.reduce((sum, item) => sum + Number(item.sq_meters || 0), 0);
+            const totalAmtBank = data.filter(s => !s.is_cash).reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+            const totalAmtCash = data.filter(s => s.is_cash).reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+
+            const currentProgInt = Math.floor((totalSq / BASE_GOAL) * 10);
+            if (currentProgInt > lastProgressRef.current) {
+                setMilestoneCelebration(currentProgInt * 10);
+                triggerMilestoneConfetti();
+                setTimeout(() => setMilestoneCelebration(null), 5000);
+            }
+            lastProgressRef.current = currentProgInt;
+
+            setStats({
+                totalSponsors: data.length, totalSqMeters: totalSq,
+                totalAmount: totalAmtBank, totalAmountCash: totalAmtCash,
+                bookedIndices: Array.from({ length: totalSq }, (_, i) => i)
+            });
+
+            setChatMessages(data.slice(0, 10).map(s => ({
+                id: s.id, name: s.is_anonymous ? 'Anonym' : s.full_name,
+                amount: s.sq_meters, isCash: s.is_cash, cashAmount: s.total_amount,
+                time: new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            })));
         }
-        fire(0.25, { spread: 26, startVelocity: 55 });
-        fire(0.2, { spread: 60 });
-        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-        fire(0.1, { spread: 120, startVelocity: 45 });
     };
 
     useEffect(() => {
+        supabase.rpc('get_public_settings').then(({ data }) => {
+            const s = Array.isArray(data) ? data[0] : data;
+            if (s?.price_per_unit) setPricePerUnit(s.price_per_unit);
+            if (s) setDashboardLocked(s.dashboard_locked || false);
+        });
+
+        // Realtime-Listener für dashboard_locked
+        const settingsChannel = supabase
+            .channel('project_settings_changes')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'project_settings' }, ({ new: newData }) => {
+                if (newData) setDashboardLocked(newData.dashboard_locked || false);
+            })
+            .subscribe();
+
         const fetchInitialState = async () => {
             const { data, error } = await supabase
-                .from('sponsors')
-                .select('*')
+                .from('sponsors_public')
+                .select('id,full_name,sq_meters,is_anonymous,total_amount,is_cash,created_at')
                 .order('created_at', { ascending: false });
 
             if (data && !error) {
                 const totalSq = data.reduce((sum, item) => sum + Number(item.sq_meters || 0), 0);
-                const totalAmt = data.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
-                const initialIndices = Array.from({ length: totalSq }, (_, i) => i);
-
+                const totalAmtBank = data.filter(s => !s.is_cash).reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+                const totalAmtCash = data.filter(s => s.is_cash).reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
                 setStats({
-                    totalSponsors: data.length,
-                    totalSqMeters: totalSq,
-                    totalAmount: totalAmt,
-                    bookedIndices: initialIndices
+                    totalSponsors: data.length, totalSqMeters: totalSq,
+                    totalAmount: totalAmtBank, totalAmountCash: totalAmtCash,
+                    bookedIndices: Array.from({ length: totalSq }, (_, i) => i)
                 });
-
-                const initialMessages = data.slice(0, 12).map(s => ({
-                    id: s.id,
-                    name: s.is_anonymous ? 'Anonym' : s.full_name,
-                    amount: s.sq_meters,
+                // Initiale Nachrichten direkt setzen (kein Queue-Delay beim Laden)
+                setChatMessages(data.slice(0, 10).map(s => ({
+                    id: s.id, name: s.is_anonymous ? 'Anonym' : s.full_name,
+                    amount: s.sq_meters, isCash: s.is_cash, cashAmount: s.total_amount,
                     time: new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }));
-                setChatMessages(initialMessages);
+                })));
                 lastProgressRef.current = Math.floor((totalSq / BASE_GOAL) * 10);
             }
         };
         fetchInitialState();
 
         const unsubscribe = subscribeToSponsors((payload) => {
-            const data = payload.new;
-            if (!data) return;
+            const eventType = payload.eventType;
 
-            const newMessage = {
-                id: data.id || Date.now(),
-                name: data.is_anonymous ? 'Anonym' : data.full_name,
-                amount: data.sq_meters,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            setChatMessages(prev => [newMessage, ...prev].slice(0, 15));
+            if (eventType === 'INSERT') {
+                const data = payload.new;
+                if (!data) return;
 
-            setStats(prev => {
-                const sqToAdd = Number(data.sq_meters || 0);
-                const newTotal = prev.totalSqMeters + sqToAdd;
+                // Neue Nachrichten in Queue — kommen mit 1 Sek Abstand
+                addToIncomingQueue({
+                    id: data.id || Date.now(),
+                    name: data.is_anonymous ? 'Anonym' : data.full_name,
+                    amount: data.sq_meters,
+                    isCash: data.iban === 'CASH',
+                    cashAmount: data.total_amount,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
 
-                const currentProgInt = Math.floor((newTotal / BASE_GOAL) * 10);
-                if (currentProgInt > lastProgressRef.current) {
-                    setMilestoneCelebration(currentProgInt * 10);
-                    triggerMilestoneConfetti();
-                    setTimeout(() => setMilestoneCelebration(null), 10000);
-                    lastProgressRef.current = currentProgInt;
-                }
-
-                return {
-                    totalSponsors: prev.totalSponsors + 1,
-                    totalSqMeters: newTotal,
-                    totalAmount: prev.totalAmount + Number(data.total_amount || 0),
-                    bookedIndices: Array.from({ length: newTotal }, (_, i) => i)
-                };
-            });
+                setStats(prev => {
+                    const sqToAdd = Number(data.sq_meters || 0);
+                    const newTotal = prev.totalSqMeters + sqToAdd;
+                    const currentProgInt = Math.floor((newTotal / BASE_GOAL) * 10);
+                    if (currentProgInt > lastProgressRef.current) {
+                        setMilestoneCelebration(currentProgInt * 10);
+                        triggerMilestoneConfetti();
+                        setTimeout(() => setMilestoneCelebration(null), 5000);
+                        lastProgressRef.current = currentProgInt;
+                    }
+                    return {
+                        ...prev, totalSponsors: prev.totalSponsors + 1, totalSqMeters: newTotal,
+                        totalAmount: data.iban !== 'CASH' ? prev.totalAmount + Number(data.total_amount || 0) : prev.totalAmount,
+                        totalAmountCash: data.iban === 'CASH' ? (prev.totalAmountCash || 0) + Number(data.total_amount || 0) : (prev.totalAmountCash || 0),
+                        bookedIndices: Array.from({ length: newTotal }, (_, i) => i)
+                    };
+                });
+            } else if (eventType === 'UPDATE' || eventType === 'DELETE') {
+                // Re-fetch from DB to get accurate totals
+                refetchStats();
+            }
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            settingsChannel.unsubscribe();
+            if (queueTimerRef.current) clearTimeout(queueTimerRef.current);
+        };
     }, []);
 
-    const { minifiedUnits, activeUnits } = useMemo(() => {
-        const bookedCount = stats.bookedIndices.length;
-        const cappedBooked = Math.min(bookedCount, BASE_GOAL);
-        
-        // If we reached the goal, archive everything
-        if (bookedCount >= BASE_GOAL) {
-            return { 
-                minifiedUnits: Array.from({ length: BASE_GOAL }, (_, i) => i), 
-                activeUnits: [] 
-            };
-        }
+    useEffect(() => {
+        const timer = setTimeout(scrollToBoundary, 300);
+        return () => clearTimeout(timer);
+    }, [stats.bookedIndices.length]);
 
-        const fullBlocksCount = Math.floor(cappedBooked / ROW_BLOCK);
-        const minified = Array.from({ length: fullBlocksCount * ROW_BLOCK }, (_, i) => i);
-        const remaining = BASE_GOAL - minified.length;
-        const active = Array.from({ length: remaining }, (_, i) => i + minified.length);
-
-        return { minifiedUnits: minified, activeUnits: active };
-    }, [stats.bookedIndices, stats.totalSqMeters]);
-
+    const bookedCount = stats.bookedIndices.length;
+    const activeUnits = useMemo(() => Array.from({ length: BASE_GOAL }, (_, i) => i), []);
     const overflowM2 = Math.max(0, stats.totalSqMeters - BASE_GOAL);
     const goalReached = stats.totalSqMeters >= BASE_GOAL;
-
-    // Progress bar
     const totalForBar = Math.max(stats.totalSqMeters, BASE_GOAL);
-    const greenPercent = goalReached
-        ? (BASE_GOAL / totalForBar * 100)
-        : (stats.totalSqMeters / BASE_GOAL * 100);
+    const greenPercent = goalReached ? (BASE_GOAL / totalForBar * 100) : (stats.totalSqMeters / BASE_GOAL * 100);
     const goldPercent = goalReached ? (overflowM2 / totalForBar * 100) : 0;
+    const donationTotal = (Number(stats.totalAmount || 0) * 12) + Number(stats.totalAmountCash || 0);
+
+    if (dashboardLocked) {
+        return (
+            <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ textAlign: 'center' }}>
+                    <img src="/logo.png" alt="Al-Rahma Logo" style={{ width: '700px', maxWidth: '90vw' }} />
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
-        <div className="dashboard-container bg-[#030303] flex-col min-h-screen relative overflow-hidden font-inter">
+        <div style={{ minHeight: '100vh', height: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column-reverse', overflow: 'hidden' }}>
 
-            {/* Ambient Background - green */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-[150px]" />
-                <div className="absolute bottom-1/3 right-0 w-[300px] h-[300px] bg-emerald-400/[0.015] rounded-full blur-[120px]" />
-            </div>
-
-            {/* Milestone Celebration */}
+            {/* Milestone */}
             <AnimatePresence>
                 {milestoneCelebration && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-2xl">
-                        <motion.div initial={{ scale: 0.5, y: 100 }} animate={{ scale: 1, y: 0 }} className="text-center">
-                            <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2 }} className="text-emerald-400 text-sm font-black uppercase tracking-[0.5em] mb-6">
-                                <Sparkles className="inline mr-3" size={16} />Meilenstein Erreicht!<Sparkles className="inline ml-3" size={16} />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.96)' }}>
+                        <motion.div initial={{ scale: 0.3, y: 120 }} animate={{ scale: 1, y: 0 }} transition={{ type: 'spring', damping: 14, stiffness: 120 }}
+                            style={{ textAlign: 'center', padding: '0 60px' }}>
+                            <motion.div animate={{ scale: [1, 1.08, 1], opacity: [0.8, 1, 0.8] }} transition={{ repeat: Infinity, duration: 2.5 }}
+                                style={{ fontSize: '80px', fontWeight: 900, color: '#059669', letterSpacing: '0.05em', marginBottom: '20px', direction: 'rtl' }}>
+                                {'\u0627\u064E\u0644\u0644\u0647\u064F \u0623\u064E\u0643\u0652\u0628\u064E\u0631'}
                             </motion.div>
-                            <h2 className="text-[12rem] font-black text-white leading-none mb-4">{milestoneCelebration}%</h2>
-                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="mt-12 text-emerald-400 flex justify-center"><Heart size={64} fill="currentColor" /></motion.div>
+                            <motion.div animate={{ scale: [0.95, 1.05, 0.95] }} transition={{ repeat: Infinity, duration: 1.8 }}
+                                style={{ fontSize: '28rem', fontWeight: 900, color: '#111827', lineHeight: 1, letterSpacing: '-0.04em' }}>
+                                {milestoneCelebration}%
+                            </motion.div>
+                            <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ repeat: Infinity, duration: 2 }}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', fontSize: '56px', fontWeight: 900, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.3em', marginTop: '24px' }}>
+                                <Sparkles size={56} />Meilenstein Erreicht!<Sparkles size={56} />
+                            </motion.div>
+                            <motion.div animate={{ scale: [1, 1.06, 1], opacity: [0.7, 1, 0.7] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5 }}
+                                style={{ fontSize: '72px', fontWeight: 900, color: '#d97706', letterSpacing: '0.05em', marginTop: '28px', direction: 'rtl' }}>
+                                {'\u0627\u0644\u062D\u064E\u0645\u0652\u062F\u064F \u0644\u0650\u0644\u0651\u064E\u0647'}
+                            </motion.div>
+                            <motion.div animate={{ scale: [1, 1.3, 1], rotate: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 1.5 }}
+                                style={{ marginTop: '40px', color: '#10b981', display: 'flex', justifyContent: 'center', gap: '32px' }}>
+                                <Heart size={100} fill="currentColor" />
+                                <Heart size={140} fill="currentColor" />
+                                <Heart size={100} fill="currentColor" />
+                            </motion.div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Live Chat Overlay */}
-            <div className="fixed bottom-8 left-8 z-[100] w-80 pointer-events-none">
-                <div className="space-y-2 flex flex-col-reverse max-h-[400px] overflow-hidden">
-                    <AnimatePresence mode='popLayout'>
-                        {chatMessages.map((msg) => (
-                            <motion.div key={msg.id} layout initial={{ opacity: 0, x: -30, scale: 0.9 }} animate={{ opacity: 0.9, x: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                                className="bg-gradient-to-r from-black/60 to-black/30 backdrop-blur-xl border border-white/[0.06] p-3.5 rounded-2xl flex items-start space-x-3 shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
-                                <div className="mt-1.5 w-2 h-2 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                                <div className="flex-grow min-w-0">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-white/90 text-xs font-bold truncate">{msg.name}</span>
-                                        <span className="text-white/30 text-[9px] font-medium ml-2 flex-shrink-0">{msg.time}</span>
-                                    </div>
-                                    <div className="text-emerald-400/80 text-[11px] font-medium">hat <span className="text-white font-bold">{msg.amount} m²</span> gespendet</div>
+            {/* Live Chat — stapelt sich nach oben, neue kommen mit 1 Sek Abstand */}
+            <div style={{
+                position: 'fixed',
+                bottom: '60px',
+                left: '60px',
+                zIndex: 100,
+                width: '820px',
+                pointerEvents: 'none',
+                display: 'flex',
+                flexDirection: 'column-reverse',
+                gap: '16px',
+                maxHeight: 'calc(90vh - 220px)',
+                overflow: 'hidden',
+            }}>
+                <AnimatePresence mode='popLayout'>
+                    {chatMessages.map((msg) => (
+                        <motion.div
+                            key={msg.id}
+                            layout
+                            initial={{ opacity: 0, y: 60, scale: 0.88 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
+                            transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+                            style={{
+                                background: 'rgba(255,255,255,0.82)',
+                                backdropFilter: 'blur(20px)',
+                                WebkitBackdropFilter: 'blur(20px)',
+                                border: '2px solid rgba(16,185,129,0.2)',
+                                borderRadius: '28px',
+                                padding: '24px 32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '20px',
+                                boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+                                flexShrink: 0,
+                            }}>
+                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <span style={{ color: '#111827', fontSize: '38px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {msg.name}
+                                    </span>
+                                    <span style={{ color: '#6b7280', fontSize: '26px', marginLeft: '16px', flexShrink: 0 }}>
+                                        {msg.time}
+                                    </span>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-                </div>
+                                <div style={{ color: '#4b5563', fontSize: '30px' }}>
+                                    {msg.isCash && msg.amount === 0
+                                        ? <>hat <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span> bar gespendet</>
+                                        : <>hat <span style={{ color: '#059669', fontWeight: 700 }}>{msg.amount} m&sup2;</span> gespendet</>
+                                    }
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
 
-            <div className="flex flex-grow w-full relative h-screen overflow-hidden z-10">
-
-                {/* Main Content */}
-                <div className="flex-grow relative p-10 overflow-y-auto custom-scrollbar h-full">
-                    <div className="max-w-[1400px] mx-auto pb-40">
-
-                        {/* PROGRESS SECTION */}
-                        <div className="mb-14 space-y-5">
-                            <div className="flex items-end justify-between">
-                                <div className="space-y-1">
-                                    <div className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em] flex items-center gap-2">
-                                        <Target size={12} />Aktueller Fortschritt
-                                    </div>
-                                    <div className="flex items-baseline space-x-2">
-                                        <span className="text-6xl font-black text-white tracking-tighter">{Math.min(stats.totalSqMeters, BASE_GOAL)}</span>
-                                        <span className="text-2xl font-bold text-white/20 uppercase tracking-widest">/ {BASE_GOAL} m²</span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-emerald-400 text-6xl font-black tracking-tighter">
-                                        {((stats.totalSqMeters / BASE_GOAL) * 100).toFixed(1)}%
-                                    </div>
-                                    <div className="text-white/20 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">der Gesamtfläche finanziert</div>
-                                </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div className="space-y-2">
-                                {/* Labels */}
-                                <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-[0.15em]">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-emerald-700 to-emerald-400" />
-                                        <span className="text-emerald-400/60">Miete & Kosten</span>
-                                        <span className="text-white/20">({Math.min(stats.totalSqMeters, BASE_GOAL)}/{BASE_GOAL} m²)</span>
-                                    </div>
-                                    {goalReached && overflowM2 > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#8a6d2b] to-[#c9a84c]" />
-                                            <span className="text-[#c9a84c]/60">Moschee Kauf</span>
-                                            <span className="text-white/20">(+{overflowM2} m²)</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Bar */}
-                                <div className="relative h-5 bg-white/[0.04] rounded-full overflow-hidden border border-white/[0.04] flex">
-                                    {/* Miete & Kosten (Green) */}
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${greenPercent}%` }}
-                                        transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
-                                        className="h-full relative overflow-hidden"
-                                        style={{
-                                            background: 'linear-gradient(90deg, #065f46, #10b981, #34d399)',
-                                            boxShadow: '0 0 30px rgba(16,185,129,0.25)'
-                                        }}
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" 
-                                             style={{ animation: 'shimmer 2s infinite linear', backgroundSize: '200% 100%' }} />
-                                    </motion.div>
-
-                                    {/* Moschee Kauf (Gold) - only when goal reached */}
-                                    {goalReached && goldPercent > 0 && (
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${goldPercent}%` }}
-                                            transition={{ duration: 1.5, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
-                                            className="h-full relative overflow-hidden border-l border-white/10"
-                                            style={{
-                                                background: 'linear-gradient(90deg, #8a6d2b, #c9a84c, #d4b85c)',
-                                                boxShadow: '0 0 25px rgba(201,168,76,0.3)'
-                                            }}
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" 
-                                                 style={{ animation: 'shimmer 2.5s infinite linear', backgroundSize: '200% 100%' }} />
-                                        </motion.div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ARCHIVIERTE REIHEN */}
-                        {minifiedUnits.length > 0 && (() => {
-                            const rowBlockSize = ROW_BLOCK;
-                            const numBlocks = Math.floor(minifiedUnits.length / rowBlockSize);
-                            const archivedM2 = Math.min(minifiedUnits.length, BASE_GOAL);
-                            return (
-                                <div className="mb-14">
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between mb-8 px-2">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/10">
-                                                <LayoutGrid size={20} className="text-emerald-400/60" />
-                                            </div>
-                                            <div>
-                                                <div className="text-white/40 text-sm font-bold uppercase tracking-[0.15em]">Bereits reserviert</div>
-                                                <div className="text-white/15 text-xs font-medium mt-1">{numBlocks} abgeschlossene Reihen · {archivedM2} m²</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right flex items-baseline gap-2">
-                                            <span className="text-emerald-400/50 text-4xl font-black">{archivedM2}</span>
-                                            <span className="text-white/15 text-xs uppercase tracking-wider">m²</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Card Grid */}
-                                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                        {Array.from({ length: numBlocks }).map((_, blockIdx) => {
-                                            const startM2 = blockIdx * rowBlockSize + 1;
-                                            const endM2 = (blockIdx + 1) * rowBlockSize;
-                                            const intensity = 0.06 + (blockIdx / Math.max(numBlocks, 1)) * 0.1;
-                                            return (
-                                                <motion.div
-                                                    key={blockIdx}
-                                                    initial={{ opacity: 0, scale: 0.9 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    transition={{ delay: blockIdx * 0.02, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                                                    className="group relative rounded-2xl border border-white/[0.04] overflow-hidden hover:border-emerald-500/15 transition-all duration-500 cursor-default"
-                                                    style={{ background: `linear-gradient(135deg, rgba(16,185,129,${intensity * 0.3}), rgba(6,78,59,${intensity * 0.5}))` }}
-                                                >
-                                                    <div className="h-0.5 bg-gradient-to-r from-emerald-500/20 via-emerald-400/30 to-emerald-500/20" />
-                                                    <div className="p-5 relative">
-                                                        <div className="text-emerald-400/15 text-3xl font-black absolute top-3 right-4 group-hover:text-emerald-400/25 transition-colors duration-500">
-                                                            {String(blockIdx + 1).padStart(2, '0')}
-                                                        </div>
-                                                        <div className="text-emerald-400/40 text-xs font-bold tracking-wider mb-2 group-hover:text-emerald-400/60 transition-colors duration-500">
-                                                            {startM2}–{endM2} m²
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-emerald-500/40" />
-                                                            <span className="text-white/20 text-[10px] font-medium uppercase tracking-wider group-hover:text-white/30 transition-colors">Reserviert</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="absolute inset-0 bg-emerald-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        {/* ACTIVE GRID - only shows if not all 710 filled */}
-                        {activeUnits.length > 0 && (
-                            <div className="relative">
-                                <div className="flex items-center justify-between text-[10px] text-white/20 font-bold uppercase tracking-[0.2em] px-4 mb-4">
-                                    <span className="flex items-center gap-2">
-                                        🕌 Aktuelle Fläche – Moschee Abo
-                                    </span>
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        Live
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-6 w-full relative overflow-hidden p-14 rounded-[4rem] border border-emerald-900/20"
-                                    style={{
-                                        background: 'linear-gradient(180deg, #030f0a 0%, #040804 50%, #050505 100%)',
-                                        boxShadow: '0 0 120px rgba(16,185,129,0.03), inset 0 1px 0 rgba(16,185,129,0.04)'
-                                    }}
-                                >
-                                    {/* Mosque arch */}
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-20 border-b-2 border-emerald-700/20 rounded-b-full" />
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-12 border-b border-emerald-600/15 rounded-b-full" />
-                                    <div className="absolute top-4 left-1/2 -translate-x-1/2 text-emerald-700/20 text-2xl">☪</div>
-
-                                    {/* Corner ornaments */}
-                                    <div className="absolute top-6 left-6 w-8 h-8 border-l border-t border-emerald-800/15 rounded-tl-lg" />
-                                    <div className="absolute top-6 right-6 w-8 h-8 border-r border-t border-emerald-800/15 rounded-tr-lg" />
-                                    <div className="absolute bottom-6 left-6 w-8 h-8 border-l border-b border-emerald-800/15 rounded-bl-lg" />
-                                    <div className="absolute bottom-6 right-6 w-8 h-8 border-r border-b border-emerald-800/15 rounded-br-lg" />
-                                    
-                                    <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-emerald-500/[0.03] blur-[120px] rounded-full" />
-
-                                    {activeUnits.map((idx) => (
-                                        <SajadahElement
-                                            key={idx}
-                                            index={idx}
-                                            isBooked={idx < stats.bookedIndices.length}
-                                            isOverflow={false}
-                                            delay={(idx % COLS) * 0.02}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+            {/* HEADER */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '60px', padding: '44px 80px', borderBottom: '4px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexShrink: 0 }}>
+                    <span style={{ color: '#059669', fontSize: '40px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em' }}>&#x1F54C; Al-Rahma</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                        <span style={{ color: '#9ca3af', fontSize: '24px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Live</span>
                     </div>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '18px', flexShrink: 0 }}>
+                    <Target size={44} style={{ color: '#9ca3af' }} />
+                    <span style={{ fontSize: '120px', fontWeight: 900, color: '#111827', lineHeight: 1, letterSpacing: '-0.03em' }}>
+                        {Math.min(stats.totalSqMeters, BASE_GOAL)}
+                    </span>
+                    <span style={{ fontSize: '60px', fontWeight: 700, color: '#6b7280' }}>/ {BASE_GOAL} m&sup2;</span>
+                </div>
+                <div style={{ flex: 1, height: '64px', background: '#d1d5db', borderRadius: '999px', overflow: 'hidden', display: 'flex' }}>
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${greenPercent}%` }}
+                        transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
+                        style={{ height: '100%', background: 'linear-gradient(90deg, #059669, #10b981, #34d399)' }} />
+                    {goalReached && goldPercent > 0 && (
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${goldPercent}%` }}
+                            transition={{ duration: 1.5, delay: 0.3 }}
+                            style={{ height: '100%', background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
+                    )}
+                </div>
+                <span style={{ fontSize: '120px', fontWeight: 900, color: '#059669', letterSpacing: '-0.03em', flexShrink: 0, lineHeight: 1 }}>
+                    {((stats.totalSqMeters / BASE_GOAL) * 100).toFixed(1)}%
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px', padding: '24px 40px', background: '#f9fafb', borderRadius: '28px', border: '2px solid #e5e7eb', flexShrink: 0 }}>
+                    <Users size={44} style={{ color: '#9ca3af' }} />
+                    <span style={{ fontSize: '100px', fontWeight: 900, color: '#111827', lineHeight: 1 }}>
+                        {Number(stats.totalSponsors).toLocaleString()}
+                    </span>
+                    <span style={{ color: '#9ca3af', fontSize: '24px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Spender</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px', padding: '24px 40px', background: '#f0fdf4', borderRadius: '28px', border: '2px solid #bbf7d0', flexShrink: 0 }}>
+                    <Euro size={44} style={{ color: '#10b981' }} />
+                    <span style={{ fontSize: '100px', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
+                        &euro;{donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                </div>
+                {goalReached && overflowM2 > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '18px', padding: '24px 40px', background: '#fffbeb', borderRadius: '28px', border: '2px solid #fde68a', flexShrink: 0 }}>
+                        <span style={{ fontSize: '100px', fontWeight: 900, color: '#92400e', lineHeight: 1 }}>
+                            &euro;{(overflowM2 * pricePerUnit * 12).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </span>
+                        <span style={{ color: '#b45309', fontSize: '24px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Kauf</span>
+                    </div>
+                )}
+            </div>
 
-                {/* Right Sidebar */}
-                <div className="w-[380px] flex flex-col bg-[#040404] border-l border-white/[0.04] shadow-2xl relative z-40">
-                    <div className="p-8"><StatsSidebar data={stats} goal={BASE_GOAL} /></div>
+            {/* TEPPICH */}
+            <div style={{ flex: 1, padding: '36px 72px 36px', marginTop: '220px', overflow: 'hidden' }}>
+                <div ref={carpetScrollRef}
+                    style={{ height: '100%', position: 'relative', borderRadius: '56px', overflow: 'auto', border: '3px solid #6ee7b7', background: 'linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%)', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <div style={{ position: 'sticky', top: 0, left: 0, right: 0, height: 0, zIndex: 10, pointerEvents: 'none' }}>
+                        <div style={{ position: 'absolute', top: '28px', left: '28px', width: '64px', height: '64px', borderLeft: '5px solid #6ee7b7', borderTop: '5px solid #6ee7b7', borderRadius: '16px 0 0 0' }} />
+                        <div style={{ position: 'absolute', top: '28px', right: '28px', width: '64px', height: '64px', borderRight: '5px solid #6ee7b7', borderTop: '5px solid #6ee7b7', borderRadius: '0 16px 0 0' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`, gap: '10px', padding: '80px 72px 80px' }}>
+                        {activeUnits.map((idx) => (
+                            <SajadahElement key={idx} index={idx} isBooked={idx < bookedCount} isOverflow={false} delay={(idx % COLS) * 0.003} />
+                        ))}
+                    </div>
+                    <div style={{ position: 'sticky', bottom: 0, left: 0, right: 0, height: 0, zIndex: 10, pointerEvents: 'none' }}>
+                        <div style={{ position: 'absolute', bottom: '28px', left: '28px', width: '64px', height: '64px', borderLeft: '5px solid #6ee7b7', borderBottom: '5px solid #6ee7b7', borderRadius: '0 0 0 16px' }} />
+                        <div style={{ position: 'absolute', bottom: '28px', right: '28px', width: '64px', height: '64px', borderRight: '5px solid #6ee7b7', borderBottom: '5px solid #6ee7b7', borderRadius: '0 0 16px 0' }} />
+                        <div style={{ position: 'absolute', bottom: '28px', right: '120px', display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.5 }}>
+                            <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#059669', display: 'inline-block' }} />
+                            <span style={{ fontSize: '18px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', color: '#065f46' }}>Live</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Bottom Progress Strip */}
-            <div className="fixed bottom-0 left-0 right-0 z-[90] h-1 flex">
-                <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${greenPercent}%` }}
+            {/* Bottom Strip */}
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 90, height: '10px', display: 'flex' }}>
+                <motion.div initial={{ width: 0 }} animate={{ width: `${greenPercent}%` }}
                     transition={{ duration: 2, ease: 'easeOut' }}
-                    className="h-full bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-400"
-                    style={{ boxShadow: '0 0 15px rgba(52,211,153,0.4)' }}
-                />
+                    style={{ height: '100%', background: 'linear-gradient(90deg, #059669, #10b981, #34d399)' }} />
                 {goalReached && goldPercent > 0 && (
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${goldPercent}%` }}
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${goldPercent}%` }}
                         transition={{ duration: 2, delay: 0.5, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-[#8a6d2b] via-[#c9a84c] to-[#d4b85c]"
-                        style={{ boxShadow: '0 0 15px rgba(201,168,76,0.4)' }}
-                    />
+                        style={{ height: '100%', background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
                 )}
             </div>
         </div>

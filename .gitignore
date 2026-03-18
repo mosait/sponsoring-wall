@@ -5,12 +5,14 @@ node_modules/
 dist/
 dist-ssr/
 
-# Environment & Secrets
+# Environment & Secrets — NIEMALS committen
 .env
+.env.prod
 .env.local
 .env.production
 *.local
 enc_output.txt
+backup_*.sql
 
 # OS files
 .DS_Store

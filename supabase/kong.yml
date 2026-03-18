@@ -1,5 +1,27 @@
 _format_version: "1.1"
 services:
+  - name: auth
+    url: http://auth:9999
+    routes:
+      - name: auth-v1
+        paths:
+          - /auth/v1
+        strip_path: true
+        plugins:
+          - name: cors
+            config:
+              origins: ["*"]
+              methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+              headers: ["*"]
+              exposed_headers: ["*"]
+              credentials: true
+          - name: rate-limiting
+            config:
+              minute: 10
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+
   - name: postgrest
     url: http://rest:3000
     routes:
@@ -12,9 +34,15 @@ services:
             config:
               origins: ["*"]
               methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS", "PUT"]
-              headers: ["Content-Type", "Authorization", "apikey", "X-Client-Info", "Prefer"]
-              exposed_headers: ["Content-Range", "X-Total-Count"]
+              headers: ["Content-Type", "Authorization", "apikey", "X-Client-Info", "Prefer", "Content-Profile", "Accept-Profile", "x-supabase-auth"]
+              exposed_headers: ["Content-Range", "X-Total-Count", "Content-Profile"]
               credentials: true
+          - name: rate-limiting
+            config:
+              minute: 30
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
 
   - name: realtime
     url: http://realtime:4000
@@ -22,22 +50,28 @@ services:
       - name: realtime-websocket
         paths:
           - /realtime/v1/websocket
-        strip_path: true
+        strip_path: false
+        plugins:
+          - name: request-transformer
+            config:
+              replace:
+                uri: /socket/websocket
+          - name: cors
+            config:
+              origins: ["*"]
+              methods: ["GET", "POST", "OPTIONS"]
+              headers: ["*"]
+              exposed_headers: ["*"]
+              credentials: true
       - name: realtime-api
         paths:
           - /realtime/v1/api
         strip_path: true
-    plugins:
-      - name: cors
-        config:
-          origins: ["*"]
-          methods: ["GET", "POST", "OPTIONS"]
-          headers: ["*"]
-          exposed_headers: ["*"]
-          credentials: true
-      - name: request-transformer
-        config:
-          replace:
-            uri: /socket/websocket # Force websocket path
-        # Only apply to the websocket route
-    # Note: Kong 2.x request-transformer is per route or service
+        plugins:
+          - name: cors
+            config:
+              origins: ["*"]
+              methods: ["GET", "POST", "OPTIONS"]
+              headers: ["*"]
+              exposed_headers: ["*"]
+              credentials: true

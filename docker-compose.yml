@@ -1,21 +1,35 @@
 services:
   db:
-    build:
-      context: ./supabase
-      dockerfile: Dockerfile.db
-    restart: always
+    container_name: sponsoring-wall-db
+    image: supabase/postgres:15.1.1.78
+    ports:
+      - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-0d3c46d9d1e8fd90e4a16ee5b8659990}
+      POSTGRES_PASSWORD: qZ7_pX92_mK4_vL1_sR8_db_pass
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
-      JWT_SECRET: ${JWT_SECRET:-ca6b2ff5d35a69c5fce51c0bb56852aee8d88740a64b1d5afc2aa33fc6c157b2}
     volumes:
       - db_data:/var/lib/postgresql/data
+    command: postgres -c listen_addresses='*' -c wal_level=logical
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
       timeout: 5s
       retries: 5
+
+  realtime-setup:
+    image: postgres:15-alpine
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./scripts/init-realtime.sh:/init-realtime.sh
+    environment:
+      POSTGRES_PASSWORD: qZ7_pX92_mK4_vL1_sR8_db_pass
+      JWT_SECRET: meinsupergeheimesprojektsupersecret123
+      REALTIME_ENCRYPTION_KEY: 32b8f9e1a4c0d7e2
+    entrypoint: [ "/bin/sh", "/init-realtime.sh" ]
 
   rest:
     image: postgrest/postgrest:v12.2.0
@@ -24,42 +38,88 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD:-0d3c46d9d1e8fd90e4a16ee5b8659990}@db:5432/postgres
-      PGRST_DB_SCHEMAS: public,api
+      PGRST_DB_URI: postgres://postgres:qZ7_pX92_mK4_vL1_sR8_db_pass@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
       PGRST_DB_ANON_ROLE: anon
-      PGRST_DB_EXTRA_SEARCH_PATH: public,api
-      PGRST_JWT_SECRET: ${JWT_SECRET:-ca6b2ff5d35a69c5fce51c0bb56852aee8d88740a64b1d5afc2aa33fc6c157b2}
-
+      PGRST_OPENAPI_MODE: disabled
+      # ABSOLUT HARDCODED:
+      PGRST_JWT_SECRET: "meinsupergeheimesprojektsupersecret123"
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
-    restart: always
+        - VITE_SUPABASE_URL=http://localhost:8000
+        - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzczMzU2NDAwLCJleHAiOjE5MzExMjI4MDB9.sKbDKxhS-DpLXDgT240LO7PkCAHdGdW6rhhuMdEZDSA
     ports:
       - "80:80"
+    restart: always
+    depends_on:
+      - kong
+
+  auth:
+    container_name: supabase-auth
+    image: supabase/gotrue:v2.143.0
+    restart: always
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000/auth/v1
+      GOTRUE_SITE_URL: http://localhost
+      GOTRUE_URI_ALLOW_LIST: http://localhost
+      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_DB_DRIVER: postgres
+      DATABASE_URL: postgres://supabase_auth_admin:qZ7_pX92_mK4_vL1_sR8_db_pass@db:5432/postgres?sslmode=disable
+      GOTRUE_JWT_SECRET: meinsupergeheimesprojektsupersecret123
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@alrahma-darmstadt.de
+    depends_on:
+      db:
+        condition: service_healthy
+
+  kong:
+    container_name: supabase-kong
+    image: kong:2.8.1-alpine
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+    volumes:
+      - ./supabase/kong.yml:/etc/kong/kong.yml
     depends_on:
       - rest
+      - realtime
+      - auth
 
   realtime:
     image: ghcr.io/supabase/realtime:v2.78.11
+    platform: linux/arm64
     restart: always
+    ports:
+      - "4000:4000"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      - PORT=4000
-      - DB_HOST=db
-      - DB_NAME=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-0d3c46d9d1e8fd90e4a16ee5b8659990}
-      - DB_PORT=5432
-      - DB_SSL=false
-      - JWT_SECRET=${JWT_SECRET:-ca6b2ff5d35a69c5fce51c0bb56852aee8d88740a64b1d5afc2aa33fc6c157b2}
-      - REPLICATION_MODE=PUBLICATION
-      - DB_ENC_KEY=${REALTIME_ENCRYPTION_KEY:-d59dfcf1ced0152a}
+      PORT: "4000"
+      HOSTNAME: localhost
+      APP_NAME: realtime
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: qZ7_pX92_mK4_vL1_sR8_db_pass
+      DB_PORT: "5432"
+      DB_SSL: "false"
+      REPLICATION_MODE: PUBLICATION
+      JWT_SECRET: meinsupergeheimesprojektsupersecret123
+      API_JWT_SECRET: meinsupergeheimesprojektsupersecret123
+      METRICS_JWT_SECRET: meinsupergeheimesprojektsupersecret123
+      SECRET_KEY_BASE: 5dbf8e3a2c1b9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e
+      DB_ENC_KEY: "32b8f9e1a4c0d7e2"
+      SECURE_CHANNELS: "false"
 
 volumes:
   db_data:

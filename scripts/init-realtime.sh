@@ -1,55 +1,34 @@
 #!/bin/sh
-# Diese Variablen kommen in der Produktion aus deinem Secret Manager (Vault, AWS Secrets, etc.)
-# JWT_SECRET und REALTIME_ENCRYPTION_KEY müssen gesetzt sein.
+set -e
+# PGPASSWORD kommt aus der Container-Umgebung (docker-compose: POSTGRES_PASSWORD)
+export PGPASSWORD="${POSTGRES_PASSWORD}"
 
-# 1. Extrahiere die Keys (oder nutze die bereits gesetzten ENV-Variablen)
-JWT_SECRET=${JWT_SECRET:-"12345678901234567890123456789012"}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-"postgrespassword"}
-REALTIME_ENCRYPTION_KEY=${REALTIME_ENCRYPTION_KEY:-"1234567890123456"}
+psql -h db -U postgres -d postgres <<-EOSQL
+  -- Tenant
+  INSERT INTO public.tenants (id, name, external_id, jwt_secret, inserted_at, updated_at)
+  VALUES (
+    '3cad861d-0162-4f72-af23-087b2eb569cd',
+    'realtime',
+    'realtime',
+    'JShMf/WxB79Vl0UXnTyeORlAZfVtSJshKtrHYj4QLGfYuvlVM/KlT6Q87bLZTRdI',
+    now(),
+    now()
+  )
+  ON CONFLICT (external_id) DO UPDATE SET
+    jwt_secret = EXCLUDED.jwt_secret,
+    updated_at = now();
 
-export PGPASSWORD=$POSTGRES_PASSWORD
-
-# 2. Führe das SQL direkt beim Start der Datenbank aus
-psql -v ON_ERROR_STOP=1 -h db -U postgres -d postgres <<-EOF
-
-
-DO \$\$ 
-BEGIN
-    DELETE FROM public.extensions;
-    DELETE FROM public.tenants;
-
-    -- Wir fügen den Tenant ein. Nutze vorberechnete AES-ECB Base64 Hashes
-    INSERT INTO public.tenants (id, name, external_id, jwt_secret, presence_enabled, inserted_at, updated_at) 
-    VALUES (
-        '3cad861d-0162-4f72-af23-087b2eb569cd', 
-        'realtime', 
-        'realtime', 
-        'dXzNDNxckOrb7uz2ON0AAMa/oq6BhXPyhbLV8HHxnGcFAYegzeWphyy6sJGrc+VT', 
-        true,
-        NOW(),
-        NOW()
-    ) ON CONFLICT (external_id) DO UPDATE SET jwt_secret = EXCLUDED.jwt_secret, updated_at = NOW();
-
-    INSERT INTO public.extensions (id, type, settings, tenant_external_id, inserted_at, updated_at) 
-    VALUES (
-        '3cad861d-0162-4f72-af23-087b2eb569cf', 
-        'postgres_cdc_rls', 
-        jsonb_build_object(
-            'db_host', 'O0bymVcPkBJkHbQfmk2SxQ==',
-            'db_name', 'v1QVng3N+pZd/0AEObABwg==',
-            'db_user', 'v1QVng3N+pZd/0AEObABwg==',
-            'db_password', 'AdENA55Koette5Up5WH3LwUBh6DN5amHLLqwkatz5VM=',
-            'db_port', 'm3KM2cjJ+t7C3443QcjOgA==',
-            'ssl_enforced', false,
-            'poll_interval_ms', 100,
-            'poll_max_changes', 100,
-            'poll_max_record_bytes', 1048576,
-            'publication', 'supabase_realtime',
-            'slot_name', 'supabase_realtime_replication_slot'
-        ),
-        'realtime',
-        NOW(),
-        NOW()
-    ) ON CONFLICT (id) DO UPDATE SET settings = EXCLUDED.settings, updated_at = NOW();
-END \$\$;
-EOF
+  -- Extension (DB connection details encrypted with DB_ENC_KEY)
+  INSERT INTO public.extensions (id, type, settings, tenant_external_id, inserted_at, updated_at)
+  VALUES (
+    'd1b6c5e1-9f93-4c5d-8b8a-d1df42779df5',
+    'postgres_cdc_rls',
+    '{"db_ssl": false, "region": "eu-west-1", "db_host": "EqEuAd9TKwG43AtguEISIQ==", "db_name": "YgVrE1S+NSxyw+hz6+zsSg==", "db_port": "uktrvo4yYWgOiq1ryH9PtQ==", "db_user": "YgVrE1S+NSxyw+hz6+zsSg==", "slot_name": "supabase_realtime_replication_slot", "db_password": "3wbs5TR/5j3Qu/OrinLXWKOia/Ug1sSOOklsd08OjFI=", "publication": "supabase_realtime", "ssl_enforced": false, "poll_interval_ms": 100, "poll_max_changes": 100, "poll_max_record_bytes": 1048576}',
+    'realtime',
+    now(),
+    now()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    settings = EXCLUDED.settings,
+    updated_at = now();
+EOSQL

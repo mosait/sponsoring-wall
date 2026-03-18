@@ -2,23 +2,33 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const SajadahElement = ({ isBooked, delay, index, isMinified, isOverflow }) => {
-    const bookedBg = 'bg-gradient-to-b from-emerald-800/80 to-emerald-950/90';
-    const bookedBorder = 'border-emerald-600/25';
-    const glowColor = 'rgba(16, 185, 129, 0.12)';
-    const labelColor = 'text-emerald-400';
-    const archColor = 'border-emerald-500/15';
-    const accentColor = 'bg-emerald-400/15';
-    const dotColor = 'bg-emerald-400/25';
 
     if (isMinified) {
         return (
             <motion.div
                 layout
-                className="h-4 w-full rounded-sm bg-emerald-800/50 border border-white/[0.04]"
+                className="h-4 w-full rounded-sm border"
+                style={{ background: '#3da87a', borderColor: '#2d8a63' }}
                 title={`Platz ${index + 1}`}
             />
         );
     }
+
+    // Farben je nach Status
+    const bg = isBooked
+        ? 'linear-gradient(to bottom, #4db88a, #2d8a63)'
+        : 'linear-gradient(to bottom, #f9c4c4, #f0abab)';
+    const borderColor = isBooked ? '#3da87a' : '#edb8b8';
+    const shadow = isBooked
+        ? '0 2px 8px rgba(45,138,99,0.25)'
+        : '0 2px 6px rgba(220,160,160,0.2)';
+
+    // Muster-Farben
+    const line1 = isBooked ? 'rgba(255,255,255,0.3)' : 'rgba(153,27,27,0.22)';
+    const line2 = isBooked ? 'rgba(255,255,255,0.2)' : 'rgba(153,27,27,0.15)';
+    const line3 = isBooked ? 'rgba(255,255,255,0.15)' : 'rgba(153,27,27,0.12)';
+    const dotCol = isBooked ? 'rgba(255,255,255,0.35)' : 'rgba(153,27,27,0.2)';
+    const fransenCol = isBooked ? 'rgba(255,255,255,0.18)' : 'rgba(153,27,27,0.12)';
 
     return (
         <motion.div
@@ -32,43 +42,95 @@ const SajadahElement = ({ isBooked, delay, index, isMinified, isOverflow }) => {
             }}
             className="relative group w-full"
         >
-            <div className={`
-                relative w-full aspect-[2/3] rounded-lg transition-all duration-500 border
-                ${isBooked
-                    ? `${bookedBg} ${bookedBorder} shadow-lg`
-                    : 'bg-white/[0.015] border-white/[0.04] opacity-35 hover:opacity-60 hover:scale-105 hover:border-white/[0.08] active:scale-95'}
-            `}
-                style={isBooked ? { boxShadow: `0 4px 20px ${glowColor}` } : {}}
+            <div
+                className="relative w-full aspect-[2/3] rounded-xl transition-all duration-500 overflow-hidden"
+                style={{ background: bg, border: `1px solid ${borderColor}`, boxShadow: shadow }}
             >
-                {/* Mihrab arch pattern */}
-                {isBooked && (
-                    <>
-                        <div className={`absolute top-[10%] left-[15%] right-[15%] h-[45%] border-t-2 border-l border-r ${archColor} rounded-t-full`} />
-                        <div className={`absolute top-[18%] left-[25%] right-[25%] h-[30%] border-t border-l border-r ${archColor} rounded-t-full`} />
-                        <div className={`absolute top-[14%] left-1/2 -translate-x-1/2 w-1.5 h-1.5 ${dotColor} rounded-full`} />
-                        <div className={`absolute bottom-[15%] left-[20%] right-[20%] h-px ${accentColor}`} />
-                        <div className={`absolute bottom-[22%] left-[30%] right-[30%] h-px ${accentColor}`} />
-                    </>
-                )}
+                {/* === Teppich-Rand (innerer Rahmen) === */}
+                <div className="absolute rounded-lg" style={{
+                    top: '6%', left: '8%', right: '8%', bottom: '14%',
+                    border: `1.5px solid ${line1}`,
+                    borderRadius: '6px',
+                }} />
 
-                {!isBooked && (
-                    <>
-                        <div className="absolute top-[20%] left-[25%] right-[25%] h-[30%] border-t border-white/[0.03] rounded-t-full" />
-                        <div className="absolute bottom-[20%] left-[30%] right-[30%] h-px bg-white/[0.02]" />
-                    </>
-                )}
+                {/* === Mihrab Bogen (äußerer) === */}
+                <div className="absolute rounded-t-full" style={{
+                    top: '10%', left: '18%', right: '18%', height: '42%',
+                    borderTop: `2px solid ${line1}`,
+                    borderLeft: `1.5px solid ${line1}`,
+                    borderRight: `1.5px solid ${line1}`,
+                }} />
 
-                {isBooked && (
-                    <motion.div
-                        animate={{ opacity: [0.03, 0.12, 0.03] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                        className="absolute inset-0 rounded-lg pointer-events-none"
-                        style={{ background: `radial-gradient(ellipse at center top, ${glowColor}, transparent 70%)` }}
-                    />
-                )}
+                {/* === Mihrab Bogen (innerer) === */}
+                <div className="absolute rounded-t-full" style={{
+                    top: '16%', left: '26%', right: '26%', height: '30%',
+                    borderTop: `1.5px solid ${line2}`,
+                    borderLeft: `1px solid ${line2}`,
+                    borderRight: `1px solid ${line2}`,
+                }} />
 
-                <div className={`absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[9px] ${labelColor} tracking-tight whitespace-nowrap z-10`}>
-                    {index + 1} m²
+                {/* === Spitze des Mihrab (Tropfen/Lampe) === */}
+                <div className="absolute left-1/2 -translate-x-1/2" style={{
+                    top: '13%', width: '4px', height: '4px',
+                    borderRadius: '50%', background: dotCol,
+                }} />
+
+                {/* === Hängelampe Linie === */}
+                <div className="absolute left-1/2" style={{
+                    top: '8%', width: '1px', height: '5%',
+                    background: line3,
+                    transform: 'translateX(-50%)',
+                }} />
+
+                {/* === Horizontale Zierlinien (Teppichmuster) === */}
+                <div className="absolute" style={{
+                    bottom: '30%', left: '15%', right: '15%', height: '1px',
+                    background: line2,
+                }} />
+                <div className="absolute" style={{
+                    bottom: '25%', left: '20%', right: '20%', height: '1px',
+                    background: line3,
+                }} />
+                <div className="absolute" style={{
+                    bottom: '20%', left: '15%', right: '15%', height: '1px',
+                    background: line2,
+                }} />
+
+                {/* === Eck-Ornamente === */}
+                <div className="absolute" style={{
+                    top: '8%', left: '10%', width: '6px', height: '6px',
+                    borderTop: `1px solid ${line2}`, borderLeft: `1px solid ${line2}`,
+                }} />
+                <div className="absolute" style={{
+                    top: '8%', right: '10%', width: '6px', height: '6px',
+                    borderTop: `1px solid ${line2}`, borderRight: `1px solid ${line2}`,
+                }} />
+
+                {/* === Fransen (unten) === */}
+                <div className="absolute flex justify-around" style={{
+                    bottom: '3%', left: '12%', right: '12%', height: '8%',
+                }}>
+                    {[...Array(7)].map((_, i) => (
+                        <div key={i} style={{
+                            width: '1px', height: '100%',
+                            background: fransenCol,
+                        }} />
+                    ))}
+                </div>
+
+                {/* Hover Nummer */}
+                <div
+                    className="group-hover:opacity-100"
+                    style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        opacity: 0,
+                        color: isBooked ? '#ffffff' : 'rgb(153, 27, 27)',
+                        fontSize: '11px', fontWeight: 700,
+                        transition: 'opacity 0.2s',
+                    }}
+                >
+                    {index + 1}
                 </div>
             </div>
         </motion.div>

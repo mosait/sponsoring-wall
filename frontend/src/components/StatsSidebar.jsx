@@ -23,7 +23,7 @@ const StatBox = ({ label, value, subLabel, icon: Icon, color = "text-white", del
     </motion.div>
 );
 
-const StatsSidebar = ({ data, goal }) => {
+const StatsSidebar = ({ data, goal, pricePerUnit = 15 }) => {
     const totalSq = Number(data?.totalSqMeters || 0);
     const totalAmount = Number(data?.totalAmount || 0);
     const targetGoal = Number(goal || 710);
@@ -31,8 +31,9 @@ const StatsSidebar = ({ data, goal }) => {
     const displaySq = Math.min(totalSq, targetGoal);
     const overflowM2 = Math.max(0, totalSq - targetGoal);
     // Use actual amounts from DB × 12 for yearly
-    const donationTotal = totalAmount * 12;
-    const kaufTotal = overflowM2 * 15 * 12;
+    const donationTotal = (Number(data?.totalAmount || 0) * 12) + Number(data?.totalAmountCash || 0);
+
+    const kaufTotal = overflowM2 * pricePerUnit * 12;
 
     return (
         <div className="w-full flex flex-col relative z-10 transition-all h-full">
@@ -97,7 +98,7 @@ const StatsSidebar = ({ data, goal }) => {
                         Jeder Quadratmeter deckt Miete und laufende Kosten der Moschee.
                     </p>
                     <div className="mt-3 flex items-baseline gap-1.5">
-                        <span className="text-emerald-400/60 text-lg font-black">15€</span>
+                        <span className="text-emerald-400/60 text-lg font-black">{pricePerUnit}€</span>
                         <span className="text-white/15 text-[9px] uppercase tracking-wider">pro m² / Monat</span>
                     </div>
                 </motion.div>

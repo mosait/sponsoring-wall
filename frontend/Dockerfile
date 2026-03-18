@@ -3,49 +3,42 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package files first for better layer caching
 COPY package*.json ./
-
-# Install dependencies (production + build tools)
 RUN npm ci
-
-# Copy source code
 COPY . .
 
-# Build-time environment variables (injected via docker-compose build args)
+# Nur öffentliche Build-Vars — NIEMALS Passwörter als ARG
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
-
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
-RUN echo "Building with URL: $VITE_SUPABASE_URL"
-
-# Build the application
 RUN npm run build
 
-# Production stage - minimal image
+# Production stage
 FROM nginx:stable-alpine
 
-# Remove default nginx config
+# apache2-utils für htpasswd (bcrypt, Laufzeit-Generierung — nie im Image-Layer)
+RUN apk add --no-cache apache2-utils
+
 RUN rm -rf /etc/nginx/conf.d/*
 
-# Copy the build output to Nginx's html directory
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration (overridden by volume mount in docker-compose)
-COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
+# Nginx-Config als Template — wird beim Start per Entrypoint befüllt
+COPY nginx.prod.conf /etc/nginx/nginx.prod.conf.template
 
-# Non-root user for security
+# Entrypoint: setzt Basic Auth, IP-Allowlist und Port zur Laufzeit aus Env-Vars
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid
 
-# Expose the port (Railway provides $PORT)
 ENV PORT=80
 EXPOSE 80
 
-# Use a shell script to replace the port in the config and then start nginx
-CMD ["/bin/sh", "-c", "sed -i \"s/listen 80;/listen ${PORT};/g\" /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/docker-entrypoint.sh"]
