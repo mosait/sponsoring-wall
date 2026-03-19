@@ -80,6 +80,9 @@ services:
       GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
       GOTRUE_MAILER_AUTOCONFIRM: "true"
       GOTRUE_SMTP_ADMIN_EMAIL: admin@alrahma-darmstadt.de
+      GOTRUE_MFA_TOTP_ENABLED: "true"
+      GOTRUE_MFA_ENABLED: "true"
+      GOTRUE_MFA_MAX_ENROLLED_FACTORS: "10"
     networks:
       - internal
 

@@ -189,8 +189,15 @@ export default function Admin() {
     setIsAuthenticated(false);
   };
 
+  const forceLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setAuthStep('login');
+  };
+
   const fetchSettings = async () => {
-    const { data } = await supabase.from('project_settings').select('price_per_unit, dashboard_locked').single();
+    const { data, error } = await supabase.from('project_settings').select('price_per_unit, dashboard_locked').single();
+    if (error?.status === 401) { forceLogout(); return; }
     if (data) {
       setPricePerUnit(data.price_per_unit || 15);
       setDashboardLocked(data.dashboard_locked || false);
@@ -206,7 +213,8 @@ export default function Admin() {
   };
 
   const fetchSponsors = async () => {
-    const { data } = await supabase.from('sponsors').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('sponsors').select('*').order('created_at', { ascending: false });
+    if (error?.status === 401) { forceLogout(); return; }
     if (data) setSponsors(data);
   };
 

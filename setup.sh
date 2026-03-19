@@ -94,13 +94,78 @@ SECRET_KEY_BASE=$(openssl rand -hex 64)
 echo "  ✓ SECRET_KEY_BASE neu generiert"
 
 ENC_KEY=$(openssl rand -hex 8)
-echo "  ✓ ENC_KEY neu generiert"
+echo "  ✓ ENC_KEY neu generiert (16 Zeichen = 16 Bytes für AES-128)"
 
 # ANON_KEY und SERVICE_KEY aus dem neuen JWT_SECRET signieren
 ANON_KEY=$(generate_jwt "$JWT_SECRET" "anon")
 SERVICE_KEY=$(generate_jwt "$JWT_SECRET" "service_role")
 echo "  ✓ ANON_KEY signiert"
 echo "  ✓ SERVICE_KEY signiert"
+echo ""
+
+# --- init-realtime.sh dynamisch generieren (ENC_KEY + POSTGRES_PASSWORD + JWT_SECRET) ---
+echo "--- Realtime-Konfiguration generieren ---"
+if ! command -v node > /dev/null 2>&1; then
+  echo "  ✗ Node.js nicht gefunden — init-realtime.sh NICHT aktualisiert!"
+  echo "  ⚠ Realtime wird nicht funktionieren ohne korrekte Verschlüsselung."
+else
+  # AES-128-ECB PKCS7 mit Node.js (gleiche Methode wie Supabase Realtime Crypto.ex)
+  _enc() {
+    node -e "
+const c=require('crypto');
+const key=process.argv[1], val=process.argv[2];
+const k=Buffer.from(key).slice(0,16),v=Buffer.from(val),p=16-(v.length%16);
+const pad=Buffer.concat([v,Buffer.alloc(p,p)]),ci=c.createCipheriv('aes-128-ecb',k,null);
+ci.setAutoPadding(false);
+process.stdout.write(Buffer.concat([ci.update(pad),ci.final()]).toString('base64'));
+" "$1" "$2"
+  }
+
+  ENC_JWT=$(_enc "$ENC_KEY" "$JWT_SECRET")
+  ENC_HOST=$(_enc "$ENC_KEY" "db")
+  ENC_NAME=$(_enc "$ENC_KEY" "postgres")
+  ENC_PORT=$(_enc "$ENC_KEY" "5432")
+  ENC_USER=$(_enc "$ENC_KEY" "postgres")
+  ENC_PASS=$(_enc "$ENC_KEY" "$POSTGRES_PASSWORD")
+
+  cat > scripts/init-realtime.sh <<SHEOF
+#!/bin/sh
+set -e
+# Auto-generiert von setup.sh — nicht manuell bearbeiten
+export PGPASSWORD="\${POSTGRES_PASSWORD}"
+
+psql -h db -U postgres -d postgres <<EOSQL
+  INSERT INTO public.tenants (id, name, external_id, jwt_secret, inserted_at, updated_at)
+  VALUES (
+    '3cad861d-0162-4f72-af23-087b2eb569cd',
+    'realtime',
+    'realtime',
+    '${ENC_JWT}',
+    now(),
+    now()
+  )
+  ON CONFLICT (external_id) DO UPDATE SET
+    jwt_secret = EXCLUDED.jwt_secret,
+    updated_at = now();
+
+  INSERT INTO public.extensions (id, type, settings, tenant_external_id, inserted_at, updated_at)
+  VALUES (
+    'd1b6c5e1-9f93-4c5d-8b8a-d1df42779df5',
+    'postgres_cdc_rls',
+    '{"db_ssl": false, "region": "eu-west-1", "db_host": "${ENC_HOST}", "db_name": "${ENC_NAME}", "db_port": "${ENC_PORT}", "db_user": "${ENC_USER}", "slot_name": "supabase_realtime_replication_slot", "db_password": "${ENC_PASS}", "publication": "supabase_realtime", "ssl_enforced": false, "poll_interval_ms": 100, "poll_max_changes": 100, "poll_max_record_bytes": 1048576}',
+    'realtime',
+    now(),
+    now()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    settings = EXCLUDED.settings,
+    updated_at = now();
+EOSQL
+SHEOF
+
+  chmod +x scripts/init-realtime.sh
+  echo "  ✓ init-realtime.sh generiert (JWT_SECRET + ENC_KEY synchronisiert)"
+fi
 echo ""
 
 # ============================================================
@@ -191,11 +256,13 @@ if docker ps --format '{{.Names}}' | grep -q "sponsoring-wall-db"; then
   echo ""
 fi
 
-# --- Alles stoppen & neu bauen ---
+# --- Alles stoppen & Frontend bauen ---
 echo "--- Services bauen & starten ---"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down --remove-orphans 2>/dev/null || true
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache frontend
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d db rest realtime kong frontend
+
+# Schritt 1: Nur DB + Realtime starten (auth noch NICHT — falsches PW würde crashen)
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d db realtime
 echo ""
 
 # --- Warten bis DB bereit ---
@@ -235,9 +302,13 @@ docker exec "$DB_CONTAINER" psql -U postgres -d postgres -q -c "
 " && echo "✓ DB-User konfiguriert"
 echo ""
 
-# --- Auth starten ---
+# Schritt 2: Auth + Rest + Kong + Frontend starten (Auth zuerst, dann Rest)
 echo "--- Auth starten ---"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d auth
+echo ""
+
+# Schritt 3: Rest + Kong + Frontend (jetzt wo Auth mit korrektem PW läuft)
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d rest kong frontend
 echo ""
 
 # --- Warten bis Kong/Auth erreichbar ---

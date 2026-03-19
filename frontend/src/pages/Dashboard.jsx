@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Euro, Heart, Target, Sparkles } from 'lucide-react';
+import { Users, Euro, Heart, Target, Sparkles, X } from 'lucide-react';
 import { supabase, subscribeToSponsors } from '../lib/supabaseClient';
 import SajadahElement from '../components/SajadahElement';
 
@@ -14,6 +14,10 @@ const Dashboard = () => {
     const [milestoneCelebration, setMilestoneCelebration] = useState(null);
     const [pricePerUnit, setPricePerUnit] = useState(15);
     const [dashboardLocked, setDashboardLocked] = useState(false);
+    const [boostModal, setBoostModal] = useState(null);
+    const [boostAmount, setBoostAmount] = useState('');
+    const [boostLoading, setBoostLoading] = useState(false);
+    const [boostSuccess, setBoostSuccess] = useState(false);
     const lastProgressRef = useRef(0);
     const carpetScrollRef = useRef(null);
 
@@ -186,9 +190,21 @@ const Dashboard = () => {
             }
         });
 
+        const boostChannel = supabase.channel('boost-request')
+            .on('broadcast', { event: 'boost' }, ({ payload }) => {
+                const registered = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
+                if (registered) {
+                    setBoostModal({ message: payload.message, ...registered });
+                    setBoostAmount('');
+                    setBoostSuccess(false);
+                }
+            })
+            .subscribe();
+
         return () => {
             unsubscribe();
             settingsChannel.unsubscribe();
+            boostChannel.unsubscribe();
             if (queueTimerRef.current) clearTimeout(queueTimerRef.current);
         };
     }, []);
@@ -197,6 +213,92 @@ const Dashboard = () => {
         const timer = setTimeout(scrollToBoundary, 300);
         return () => clearTimeout(timer);
     }, [stats.bookedIndices.length]);
+
+    const handleBoostSubmit = async (addSqm) => {
+        if (!boostModal || !boostModal.iban) return;
+        const sqmToAdd = addSqm || parseInt(boostAmount) || 0;
+        if (sqmToAdd <= 0) return;
+        setBoostLoading(true);
+        const { data: success, error: rpcErr } = await supabase
+            .rpc('boost_update_sponsor', {
+                p_iban: boostModal.iban,
+                p_add_sqm: sqmToAdd,
+                p_price: pricePerUnit
+            });
+        setBoostLoading(false);
+        if (rpcErr || !success) return;
+        localStorage.setItem('sponsoring_registered', JSON.stringify({
+            name: boostModal.name,
+            email: boostModal.email,
+            iban: boostModal.iban
+        }));
+        setBoostSuccess(true);
+        setTimeout(() => setBoostModal(null), 2500);
+    };
+
+    const boostModalJSX = (
+        <AnimatePresence>
+            {boostModal && (
+                <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+                    <motion.div
+                        initial={{ scale: 0.8, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 40 }}
+                        transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+                        style={{ background: '#fff', borderRadius: '24px', padding: '40px', width: '540px', maxWidth: '90vw', position: 'relative', boxShadow: '0 25px 80px rgba(0,0,0,0.3)' }}>
+                        <button onClick={() => setBoostModal(null)}
+                            style={{ position: 'absolute', top: '20px', right: '20px', background: '#f3f4f6', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <X size={20} color="#6b7280" />
+                        </button>
+                        {boostSuccess ? (
+                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
+                                <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#059669', marginBottom: '8px' }}>Jazak Allahu Khairan!</h2>
+                                <p style={{ color: '#6b7280' }}>Dein Beitrag wurde erfolgreich erhöht.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>📢</div>
+                                    <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0c151a', marginBottom: '12px' }}>Aufruf vom Admin</h2>
+                                    <p style={{ fontSize: '17px', color: '#4b5563', background: '#f9fafb', borderRadius: '16px', padding: '16px', border: '2px solid #e5e7eb' }}>
+                                        {boostModal.message}
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#9ca3af', marginBottom: '8px' }}>
+                                        Deine E-Mail
+                                    </label>
+                                    <input type="email" readOnly value={boostModal.email}
+                                        style={{ width: '100%', background: '#f9fafb', border: '2px solid #e5e7eb', borderRadius: '12px', padding: '12px 16px', color: '#6b7280', fontWeight: 700, boxSizing: 'border-box' }} />
+                                </div>
+                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#9ca3af', marginBottom: '12px' }}>
+                                    Um wie viele m² erhöhen?
+                                </label>
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                                    {[1, 2, 5, 10].map(val => (
+                                        <button key={val} onClick={() => handleBoostSubmit(val)} disabled={boostLoading}
+                                            style={{ flex: 1, padding: '14px 0', borderRadius: '12px', border: '2px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', fontSize: '17px', fontWeight: 900, cursor: 'pointer', opacity: boostLoading ? 0.5 : 1 }}>
+                                            +{val} m²
+                                        </button>
+                                    ))}
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <input type="number" min="1" placeholder="Eigene m²" value={boostAmount}
+                                        onChange={e => setBoostAmount(e.target.value)}
+                                        style={{ flex: 1, background: '#f9fafb', border: '2px solid transparent', borderRadius: '12px', padding: '14px 16px', fontWeight: 700, color: '#0c151a', outline: 'none', boxSizing: 'border-box' }} />
+                                    <button onClick={() => handleBoostSubmit()} disabled={boostLoading || !boostAmount}
+                                        style={{ padding: '14px 28px', borderRadius: '12px', background: '#0c151a', color: '#fff', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', cursor: boostLoading || !boostAmount ? 'not-allowed' : 'pointer', opacity: boostLoading || !boostAmount ? 0.5 : 1, whiteSpace: 'nowrap' }}>
+                                        {boostLoading ? 'Speichern...' : 'Erhöhen'}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 
     const bookedCount = stats.bookedIndices.length;
     const activeUnits = useMemo(() => Array.from({ length: BASE_GOAL }, (_, i) => i), []);
@@ -219,6 +321,8 @@ const Dashboard = () => {
 
     return (
         <div style={{ minHeight: '100vh', height: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column-reverse', overflow: 'hidden' }}>
+
+            {boostModalJSX}
 
             {/* Milestone */}
             <AnimatePresence>
