@@ -14,7 +14,7 @@ ADMIN_EMAIL="admin@alrahma-darmstadt.de"
 # Hilfsfunktionen: JWT-Generierung in bash (kein externes Tool nötig)
 # ------------------------------------------------------------
 b64url() {
-  printf '%s' "$1" | base64 | tr '+/' '-_' | tr -d '='
+  printf '%s' "$1" | base64 | tr -d '\n' | tr '+/' '-_' | tr -d '='
 }
 
 generate_jwt() {
@@ -28,7 +28,7 @@ generate_jwt() {
   local h; h=$(b64url "$header")
   local p; p=$(b64url "$payload")
   local sig
-  sig=$(printf '%s' "${h}.${p}" | openssl dgst -sha256 -hmac "$secret" -binary | base64 | tr '+/' '-_' | tr -d '=')
+  sig=$(printf '%s' "${h}.${p}" | openssl dgst -sha256 -hmac "$secret" -binary | base64 | tr -d '\n' | tr '+/' '-_' | tr -d '=')
   echo "${h}.${p}.${sig}"
 }
 
