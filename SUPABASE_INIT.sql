@@ -48,7 +48,9 @@ INSERT INTO public.project_settings (goal_sq_meters, price_per_unit, dashboard_l
 SELECT 2480, 15, FALSE WHERE NOT EXISTS (SELECT 1 FROM public.project_settings);
 
 -- 5. VIEWS & RIGHTS
-CREATE OR REPLACE VIEW public.sponsors_public AS
+CREATE OR REPLACE VIEW public.sponsors_public
+WITH (security_invoker = true)
+AS
 SELECT
   id,
   full_name,
@@ -105,7 +107,14 @@ CREATE POLICY "settings_select" ON public.project_settings FOR SELECT
   USING (current_setting('request.jwt.claims', true)::json->>'role' = 'authenticated');
 
 DROP POLICY IF EXISTS "settings_update_auth" ON public.project_settings;
-CREATE POLICY "settings_update_auth" ON public.project_settings FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "settings_update_auth" ON public.project_settings
+  FOR UPDATE TO authenticated
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- Revoke Supabase internal function from public roles
+REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM authenticated;
 
 -- 6. SECURITY DEFINER FUNCTIONS
 CREATE OR REPLACE FUNCTION public.get_sponsor_for_registration(p_iban TEXT)
