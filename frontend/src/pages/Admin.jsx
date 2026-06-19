@@ -77,22 +77,10 @@ export default function Admin() {
           fetchSponsors();
         } else {
           // Session exists but needs TOTP
-          const { data: factorsData } = await supabase.auth.mfa.listFactors();
-          const verified = factorsData?.totp?.find(f => f.status === 'verified');
-          if (verified) {
-            const { data: ch } = await supabase.auth.mfa.challenge({ factorId: verified.id });
-            setTotpFactorId(verified.id);
-            setTotpChallengeId(ch.id);
-            setAuthStep('totp-challenge');
-          } else {
-            // No TOTP enrolled yet — enroll now
-            const { data: en } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Admin' });
-            const { data: ch } = await supabase.auth.mfa.challenge({ factorId: en.id });
-            setTotpFactorId(en.id);
-            setTotpChallengeId(ch.id);
-            setTotpQrSvg(en.totp.qr_code);
-            setTotpSecret(en.totp.secret);
-            setAuthStep('totp-enroll');
+          try {
+            await setupMfa();
+          } catch (err) {
+            setLoginError('MFA-Fehler: ' + err.message);
           }
         }
       }
@@ -140,7 +128,16 @@ export default function Admin() {
       return;
     }
 
-    // Check TOTP factors
+    try {
+      await setupMfa();
+    } catch (err) {
+      setLoginError('MFA-Fehler: ' + err.message);
+    }
+    setLoginLoading(false);
+  };
+
+  // Shared MFA setup logic used by both handleLogin and the session check on mount
+  const setupMfa = async () => {
     const { data: factorsData } = await supabase.auth.mfa.listFactors();
     const verified = factorsData?.totp?.find(f => f.status === 'verified');
     if (verified) {
@@ -149,7 +146,13 @@ export default function Admin() {
       setTotpChallengeId(ch.id);
       setAuthStep('totp-challenge');
     } else {
-      const { data: en } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Admin' });
+      // Unenroll any stale unverified factor left over from an incomplete previous enrollment
+      const unverified = factorsData?.totp?.find(f => f.status === 'unverified');
+      if (unverified) {
+        await supabase.auth.mfa.unenroll({ factorId: unverified.id });
+      }
+      const { data: en, error: enrollErr } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Admin' });
+      if (enrollErr || !en) throw new Error(enrollErr?.message || 'TOTP enrollment failed');
       const { data: ch } = await supabase.auth.mfa.challenge({ factorId: en.id });
       setTotpFactorId(en.id);
       setTotpChallengeId(ch.id);
@@ -157,7 +160,6 @@ export default function Admin() {
       setTotpSecret(en.totp.secret);
       setAuthStep('totp-enroll');
     }
-    setLoginLoading(false);
   };
 
   const handleTotpVerify = async () => {
