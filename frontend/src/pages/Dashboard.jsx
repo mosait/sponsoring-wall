@@ -470,7 +470,9 @@ const Dashboard = () => {
                                 </div>
                                 <div style={{ color: '#4b5563', fontSize: 'clamp(11px, 1.56vw, 30px)' }}>
                                     {msg.isCash && msg.amount === 0
-                                        ? <>es wurden <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span>{lang === 'ar' ? ' نقداً' : ' bar gespendet'}</>
+                                        ? lang === 'ar'
+                                            ? <>تبرع بـ <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span> نقداً</>
+                                            : <>es wurde <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span> bar gespendet</>
                                         : lang === 'ar'
                                             ? <>{dt.chatDonated(msg.amount)}</>
                                             : <>hat <span style={{ color: '#059669', fontWeight: 700 }}>{msg.amount} Pl.</span> gespendet</>
