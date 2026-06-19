@@ -4,7 +4,99 @@ import { User, Mail, Phone, CreditCard, ChevronRight, CheckCircle2, Building2, X
 import { supabase } from '../lib/supabaseClient';
 import { isValidIBAN, electronicFormatIBAN } from 'ibantools';
 
+const REG_T = {
+    de: {
+        badge: 'Gebetsplatz Spendenaktion',
+        heading: 'Zahle einen Gebetsplatz für ein Jahr',
+        description: 'Sichern Sie sich einen oder mehrere Gebetsplätze in der Moschee und hinterlassen Sie ein bleibendes Erbe.',
+        priceUnit: 'pro Gebetsplatz / Monat',
+        projectLabel: 'Projekt',
+        projectName: 'IZS Gebetsplatz 2025',
+        nameLabel: 'Vollständiger Name',
+        namePlaceholder: 'z.B. Abdullah Müller',
+        emailLabel: 'E-Mail Adresse',
+        emailPlaceholder: 'mail@beispiel.de',
+        phoneLabel: 'Telefon',
+        phonePlaceholder: '+49 123 45678',
+        howLabel: 'Wie möchten Sie spenden?',
+        selectUnits: 'Gebetsplätze wählen',
+        enterEuro: '€/Monat eingeben',
+        customUnits: 'Eigene Anzahl',
+        resultLabel: 'Ergibt:',
+        resultUnit: (n) => `${n} Gebetspl.`,
+        paymentHeader: 'Bezahlung per Lastschrift',
+        ibanLabel: 'IBAN',
+        ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
+        anonymousLabel: 'Anonym spenden (Name wird nicht auf der Spenderwand angezeigt)',
+        mandateLabel: 'Ich ermächtige IZS – Islamisches Zentrum Stuttgart e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom IZS – Islamisches Zentrum Stuttgart e.V. auf mein Konto gezogenen Lastschriften einzulösen.',
+        submitBtn: (amount) => `Jetzt Spenden: ${amount}€/Monat`,
+        successHeading: 'Herzlichen Dank!',
+        successText: 'Ihre Spende wurde erfolgreich registriert. Sie finden Ihren Namen in Kürze auf der Spenderwand.',
+        nextBtn: 'Nächste Registrierung',
+        errorTitle: 'Registrierung nicht möglich',
+        validNameErr: 'Bitte einen gültigen Namen eingeben.',
+        validIbanErr: 'Bitte eine valide IBAN eingeben (z.B. DE89370400440532013000)',
+        mandateErr: 'Bitte das SEPA-Lastschriftmandat akzeptieren.',
+        saveErr: (msg) => `Fehler beim Speichern: ${msg || 'Unbekannter Fehler'}`,
+        boostSuccessTitle: 'Jazak Allahu Khairan!',
+        boostSuccessText: 'Dein Beitrag wurde erfolgreich erhöht.',
+        boostAdminCall: 'Aufruf vom Admin',
+        boostEmail: 'Deine E-Mail',
+        boostHowMany: 'Um wie viele Gebetsplätze erhöhen?',
+        boostCustom: 'Eigene Anzahl',
+        boostSaving: 'Speichern...',
+        boostIncrease: 'Erhöhen',
+        langToggle: 'عربي',
+        dir: 'ltr',
+    },
+    ar: {
+        badge: 'حملة المصلى',
+        heading: 'ادفع ثمن مصلى لمدة سنة',
+        description: 'احجز مصلى أو أكثر في المسجد وابقَ أثراً دائماً.',
+        priceUnit: 'لكل مصلى / شهرياً',
+        projectLabel: 'المشروع',
+        projectName: 'IZS Gebetsplatz 2025',
+        nameLabel: 'الاسم الكامل',
+        namePlaceholder: 'مثال: عبدالله مولر',
+        emailLabel: 'البريد الإلكتروني',
+        emailPlaceholder: 'mail@beispiel.de',
+        phoneLabel: 'رقم الهاتف',
+        phonePlaceholder: '+49 123 45678',
+        howLabel: 'كيف تريد التبرع؟',
+        selectUnits: 'اختر عدد المصليات',
+        enterEuro: 'أدخل €/شهر',
+        customUnits: 'عدد مخصص',
+        resultLabel: 'يساوي:',
+        resultUnit: (n) => `${n} مصلى`,
+        paymentHeader: 'الدفع عبر خصم مباشر',
+        ibanLabel: 'IBAN',
+        ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
+        anonymousLabel: 'تبرع بشكل مجهول (لن يُعرض اسمك على جدار المتبرعين)',
+        mandateLabel: 'أفوّض IZS – Islamisches Zentrum Stuttgart e.V. بخصم المدفوعات من حسابي مباشرةً. وفي الوقت ذاته أوجّه مصرفي بصرف هذه المدفوعات.',
+        submitBtn: (amount) => `تبرع الآن: ${amount}€/شهر`,
+        successHeading: 'شكراً جزيلاً!',
+        successText: 'تم تسجيل تبرعك بنجاح. سيظهر اسمك قريباً على جدار المتبرعين.',
+        nextBtn: 'التسجيل التالي',
+        errorTitle: 'التسجيل غير ممكن',
+        validNameErr: 'يرجى إدخال اسم صحيح.',
+        validIbanErr: 'يرجى إدخال IBAN صحيح (مثال: DE89370400440532013000)',
+        mandateErr: 'يرجى قبول تفويض الخصم المباشر SEPA.',
+        saveErr: (msg) => `خطأ في الحفظ: ${msg || 'خطأ غير معروف'}`,
+        boostSuccessTitle: 'جزاك الله خيراً!',
+        boostSuccessText: 'تم رفع مساهمتك بنجاح.',
+        boostAdminCall: 'نداء من المسؤول',
+        boostEmail: 'بريدك الإلكتروني',
+        boostHowMany: 'كم مصلى تريد إضافة؟',
+        boostCustom: 'عدد مخصص',
+        boostSaving: 'جارٍ الحفظ...',
+        boostIncrease: 'رفع',
+        langToggle: 'DE',
+        dir: 'rtl',
+    },
+};
+
 const Register = () => {
+    const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'de');
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [pricePerUnit, setPricePerUnit] = useState(15);
@@ -24,6 +116,14 @@ const Register = () => {
         inputMode: 'sqm',
         monthlyEuro: ''
     });
+
+    const t = REG_T[lang];
+
+    const toggleLang = () => {
+        const next = lang === 'de' ? 'ar' : 'de';
+        setLang(next);
+        localStorage.setItem('lang', next);
+    };
 
     useEffect(() => {
         supabase.rpc('get_public_settings').then(({ data }) => {
@@ -61,17 +161,17 @@ const Register = () => {
         const cleanIban = formData.iban.replace(/\s/g, '').toUpperCase();
 
         if (!cleanName || cleanName.length < 2) {
-            setErrorMsg("Bitte einen gültigen Namen eingeben.");
+            setErrorMsg(t.validNameErr);
             return;
         }
 
         if (!validateIBAN(cleanIban)) {
-            setErrorMsg("Bitte eine valide IBAN eingeben (z.B. DE89370400440532013000)");
+            setErrorMsg(t.validIbanErr);
             return;
         }
 
         if (!formData.mandate_accepted) {
-            setErrorMsg("Bitte das SEPA-Lastschriftmandat akzeptieren.");
+            setErrorMsg(t.mandateErr);
             return;
         }
 
@@ -126,7 +226,7 @@ const Register = () => {
                 iban: cleanIban
             }));
         } else {
-            setErrorMsg(`Fehler beim Speichern: ${error.message || 'Unbekannter Fehler'}`);
+            setErrorMsg(t.saveErr(error.message));
         }
         setLoading(false);
     };
@@ -175,14 +275,14 @@ const Register = () => {
                         {boostSuccess ? (
                             <div className="text-center py-5">
                                 <div className="text-6xl mb-4">&#x2705;</div>
-                                <h2 className="text-2xl font-black text-green-600 mb-2">Jazak Allahu Khairan!</h2>
-                                <p className="text-gray-500">Dein Beitrag wurde erfolgreich erhöht.</p>
+                                <h2 className="text-2xl font-black text-green-600 mb-2">{t.boostSuccessTitle}</h2>
+                                <p className="text-gray-500">{t.boostSuccessText}</p>
                             </div>
                         ) : (
                             <>
                                 <div className="text-center mb-8">
                                     <div className="text-5xl mb-3">&#x1F4E2;</div>
-                                    <h2 className="text-2xl font-black text-[#0c151a] mb-3">Aufruf vom Admin</h2>
+                                    <h2 className="text-2xl font-black text-[#0c151a] mb-3">{t.boostAdminCall}</h2>
                                     <p className="text-lg text-gray-600 bg-gray-50 rounded-2xl p-4 border-2 border-gray-200">
                                         {boostModal.message}
                                     </p>
@@ -190,30 +290,30 @@ const Register = () => {
 
                                 <div className="mb-6">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1">
-                                        Deine E-Mail
+                                        {t.boostEmail}
                                     </label>
                                     <input type="email" readOnly value={boostModal.email}
                                         className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl py-3 px-4 text-gray-500 font-bold" />
                                 </div>
 
                                 <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3 ml-1">
-                                    Um wie viele m² erhöhen?
+                                    {t.boostHowMany}
                                 </label>
-                                <div className="flex gap-2.5 mb-4">
+                                <div className="flex flex-wrap gap-2 mb-4">
                                     {[1, 2, 5, 10].map(val => (
                                         <button key={val} onClick={() => handleBoostSubmit(val)} disabled={boostLoading}
-                                            className="flex-1 py-3.5 rounded-xl border-2 border-green-200 bg-green-50 text-green-600 text-lg font-black hover:bg-green-100 hover:border-green-300 transition-all disabled:opacity-50">
-                                            +{val} m²
+                                            className="flex-1 min-w-[60px] py-3.5 rounded-xl border-2 border-green-200 bg-green-50 text-green-600 text-lg font-black hover:bg-green-100 hover:border-green-300 transition-all disabled:opacity-50">
+                                            +{val}
                                         </button>
                                     ))}
                                 </div>
                                 <div className="flex gap-2.5">
-                                    <input type="number" min="1" placeholder="Eigene m²" value={boostAmount}
+                                    <input type="number" min="1" placeholder={t.boostCustom} value={boostAmount}
                                         onChange={e => setBoostAmount(e.target.value)}
                                         className="flex-1 bg-gray-50 border-2 border-transparent focus:border-[#0c151a] focus:bg-white rounded-xl py-3.5 px-4 font-bold text-[#0c151a] outline-none transition-all" />
                                     <button onClick={() => handleBoostSubmit()} disabled={boostLoading || !boostAmount}
                                         className="py-3.5 px-7 rounded-xl bg-[#0c151a] text-white font-black uppercase tracking-wider hover:bg-[#1a2d38] transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                                        {boostLoading ? 'Speichern...' : 'Erhöhen'}
+                                        {boostLoading ? t.boostSaving : t.boostIncrease}
                                     </button>
                                 </div>
                             </>
@@ -226,20 +326,18 @@ const Register = () => {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 mt-16 md:mt-0">
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6" dir={t.dir}>
                 {boostModalJSX}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-md w-full bg-white rounded-3xl p-12 text-center shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+                    className="max-w-md w-full bg-white rounded-3xl p-8 sm:p-12 text-center shadow-[0_0_50px_rgba(255,255,255,0.1)]"
                 >
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8">
                         <CheckCircle2 className="w-10 h-10 text-green-600" />
                     </div>
-                    <h2 className="text-3xl font-black text-[#0c151a] mb-4 uppercase tracking-tight">Herzlichen Dank!</h2>
-                    <p className="text-gray-600 mb-8 leading-relaxed">
-                        Ihre Spende wurde erfolgreich registriert. Sie finden Ihren Namen in Kürze auf der Spenderwand.
-                    </p>
+                    <h2 className="text-3xl font-black text-[#0c151a] mb-4 uppercase tracking-tight">{t.successHeading}</h2>
+                    <p className="text-gray-600 mb-8 leading-relaxed">{t.successText}</p>
                     <button
                         onClick={() => {
                             setFormData({
@@ -252,7 +350,7 @@ const Register = () => {
                         }}
                         className="w-full py-4 bg-[#0c151a] text-white rounded-xl font-bold uppercase tracking-widest hover:bg-[#1a2d38] transition-all"
                     >
-                        Nächste Registrierung
+                        {t.nextBtn}
                     </button>
                 </motion.div>
             </div>
@@ -260,31 +358,36 @@ const Register = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] py-12 px-6 flex items-center justify-center mt-16 md:mt-0">
+        <div className="min-h-screen bg-[#050505] py-8 sm:py-12 px-4 sm:px-6 flex items-center justify-center" dir={t.dir}>
             {boostModalJSX}
             <div className="max-w-4xl w-full grid md:grid-cols-2 bg-white rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(255,255,255,0.05)] border border-white/10">
 
                 {/* Left Side */}
-                <div className="bg-[#0c151a] p-12 text-white flex flex-col justify-between relative overflow-hidden">
+                <div className="bg-[#0c151a] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
+                    {/* Language Toggle */}
+                    <button onClick={toggleLang}
+                        className="absolute top-5 right-5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all z-10">
+                        {t.langToggle}
+                    </button>
                     <div className="relative z-10">
-                        <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold tracking-[0.2em] uppercase mb-8 border border-white/10">
-                            Sajadah Spendenaktion
+                        <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold tracking-[0.2em] uppercase mb-6 border border-white/10">
+                            {t.badge}
                         </div>
-                        <h1 className="text-5xl font-black mb-6 leading-[1.1] uppercase">Ein Teil der Moschee werden</h1>
-                        <p className="text-gray-400 text-lg leading-relaxed mb-8">
-                            Sichern Sie sich einen oder mehrere Quadratmeter des neuen Teppichs und hinterlassen Sie ein bleibendes Erbe.
+                        <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black mb-6 leading-[1.1] uppercase">{t.heading}</h1>
+                        <p className="text-gray-400 text-base sm:text-lg leading-relaxed mb-8">
+                            {t.description}
                         </p>
                         <div className="flex items-center space-x-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <div className="text-green-400 font-black text-2xl">{pricePerUnit}€</div>
-                            <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">pro Quadratmeter / Monat</div>
+                            <div className="text-green-400 font-black text-xl sm:text-2xl">{pricePerUnit}€</div>
+                            <div className="text-gray-400 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
                         </div>
                     </div>
-                    <div className="mt-12 pt-12 border-t border-white/10 relative z-10">
+                    <div className="mt-10 pt-10 border-t border-white/10 relative z-10">
                         <div className="flex items-center space-x-4">
-                            <Building2 className="w-8 h-8 text-gray-500" />
+                            <Building2 className="w-8 h-8 text-gray-500 shrink-0" />
                             <div>
-                                <div className="font-bold uppercase tracking-widest text-xs opacity-50">Projekt</div>
-                                <div className="font-black text-sm">Moschee Teppich 2024</div>
+                                <div className="font-bold uppercase tracking-widest text-xs opacity-50">{t.projectLabel}</div>
+                                <div className="font-black text-sm">{t.projectName}</div>
                             </div>
                         </div>
                     </div>
@@ -292,48 +395,48 @@ const Register = () => {
                 </div>
 
                 {/* Right Side: Form */}
-                <div className="p-12 overflow-y-auto max-h-[90vh] custom-scrollbar">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 gap-6">
+                <div className="p-6 sm:p-10 overflow-y-auto max-h-[90vh] custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="grid grid-cols-1 gap-5">
 
                             {/* Name */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Vollständiger Name</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.nameLabel}</label>
                                 <div className="relative group">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#0c151a] transition-colors" />
                                     <input
                                         type="text" required
                                         className="w-full bg-gray-50 border-2 border-transparent focus:border-[#0c151a] focus:bg-white rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]"
-                                        placeholder="z.B. Abdullah Müller"
+                                        placeholder={t.namePlaceholder}
                                         value={formData.full_name}
                                         onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                     />
                                 </div>
                             </div>
 
-                            {/* Email + Telefon */}
-                            <div className="grid md:grid-cols-2 gap-6">
+                            {/* Email + Phone */}
+                            <div className="grid sm:grid-cols-2 gap-5">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">E-Mail Adresse</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.emailLabel}</label>
                                     <div className="relative group">
                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#0c151a] transition-colors" />
                                         <input
                                             type="email" required
                                             className="w-full bg-gray-50 border-2 border-transparent focus:border-[#0c151a] focus:bg-white rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]"
-                                            placeholder="mail@beispiel.de"
+                                            placeholder={t.emailPlaceholder}
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Telefon</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.phoneLabel}</label>
                                     <div className="relative group">
                                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#0c151a] transition-colors" />
                                         <input
                                             type="tel"
                                             className="w-full bg-gray-50 border-2 border-transparent focus:border-[#0c151a] focus:bg-white rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]"
-                                            placeholder="+49 123 45678"
+                                            placeholder={t.phonePlaceholder}
                                             value={formData.phone}
                                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                         />
@@ -341,31 +444,31 @@ const Register = () => {
                                 </div>
                             </div>
 
-                            {/* Spendenmodus */}
+                            {/* Donation mode */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Wie möchten Sie spenden?</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.howLabel}</label>
                                 <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
                                     <button type="button"
                                         onClick={() => setFormData({ ...formData, inputMode: 'sqm' })}
                                         className={`flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${formData.inputMode === 'sqm' ? 'bg-[#0c151a] text-white shadow-lg' : 'text-gray-500'}`}
-                                    >m² auswählen</button>
+                                    >{t.selectUnits}</button>
                                     <button type="button"
                                         onClick={() => setFormData({ ...formData, inputMode: 'euro' })}
                                         className={`flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${formData.inputMode === 'euro' ? 'bg-[#0c151a] text-white shadow-lg' : 'text-gray-500'}`}
-                                    >€/Monat eingeben</button>
+                                    >{t.enterEuro}</button>
                                 </div>
 
                                 {formData.inputMode === 'sqm' ? (
-                                    <div className="flex space-x-3">
+                                    <div className="flex flex-wrap gap-2">
                                         {[1, 2, 5, 10, 20].map((val) => (
                                             <button key={val} type="button"
                                                 onClick={() => setFormData({ ...formData, sq_meters: val, customSqm: '' })}
-                                                className={`flex-1 py-3 rounded-xl font-black text-sm transition-all border-2 ${!formData.customSqm && formData.sq_meters === val ? 'bg-[#0c151a] border-[#0c151a] text-white shadow-lg' : 'bg-gray-50 border-transparent text-gray-500 hover:border-gray-200'}`}
-                                            >{val}m²</button>
+                                                className={`py-3 px-3 rounded-xl font-black text-sm transition-all border-2 ${!formData.customSqm && formData.sq_meters === val ? 'bg-[#0c151a] border-[#0c151a] text-white shadow-lg' : 'bg-gray-50 border-transparent text-gray-500 hover:border-gray-200'}`}
+                                            >{val}</button>
                                         ))}
                                         <input type="number"
-                                            className={`w-36 bg-gray-50 border-2 rounded-xl py-3 px-3 outline-none transition-all font-bold text-center text-[#0c151a] text-sm placeholder:text-xs ${formData.customSqm ? 'border-[#0c151a] bg-white' : 'border-transparent focus:border-[#0c151a] focus:bg-white'}`}
-                                            placeholder="Eigene m²" min="1"
+                                            className={`w-24 sm:w-28 bg-gray-50 border-2 rounded-xl py-3 px-3 outline-none transition-all font-bold text-center text-[#0c151a] text-sm placeholder:text-xs ${formData.customSqm ? 'border-[#0c151a] bg-white' : 'border-transparent focus:border-[#0c151a] focus:bg-white'}`}
+                                            placeholder={t.customUnits} min="1"
                                             value={formData.customSqm || ''}
                                             onChange={(e) => {
                                                 const raw = e.target.value;
@@ -388,34 +491,34 @@ const Register = () => {
                                                     setFormData({ ...formData, monthlyEuro: e.target.value, sq_meters: Math.max(sqm, 1) });
                                                 }}
                                             />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 uppercase tracking-wider">pro Monat</span>
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 uppercase tracking-wider">/ Monat</span>
                                         </div>
                                         <div className="flex items-center justify-between bg-emerald-50 rounded-xl p-3 px-4 border border-emerald-200/50">
-                                            <span className="text-emerald-700 text-xs font-bold">Ergibt:</span>
-                                            <span className="text-emerald-800 text-lg font-black">{formData.sq_meters} m²</span>
+                                            <span className="text-emerald-700 text-xs font-bold">{t.resultLabel}</span>
+                                            <span className="text-emerald-800 text-lg font-black">{t.resultUnit(formData.sq_meters)}</span>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* IBAN + Checkboxen */}
+                            {/* IBAN + checkboxes */}
                             <div className="space-y-4 pt-4 border-t border-gray-100">
                                 <div className="flex items-center space-x-2 text-[#0c151a] mb-2">
                                     <CreditCard className="w-5 h-5" />
-                                    <span className="font-bold uppercase tracking-widest text-[10px]">Bezahlung per Lastschrift</span>
+                                    <span className="font-bold uppercase tracking-widest text-[10px]">{t.paymentHeader}</span>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">IBAN</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.ibanLabel}</label>
                                     <input type="text" required
                                         className="w-full bg-gray-50 border-2 border-transparent focus:border-[#0c151a] focus:bg-white rounded-xl py-4 px-4 outline-none transition-all font-bold tracking-widest uppercase text-[#0c151a]"
-                                        placeholder="DE00 0000 0000 0000 0000 00"
+                                        placeholder={t.ibanPlaceholder}
                                         value={formData.iban}
                                         onChange={(e) => { setErrorMsg(''); setFormData({ ...formData, iban: e.target.value }); }}
                                     />
                                 </div>
 
                                 <label className="flex items-start space-x-3 cursor-pointer group">
-                                    <div className="relative mt-1">
+                                    <div className="relative mt-1 shrink-0">
                                         <input type="checkbox" className="peer hidden"
                                             checked={formData.is_anonymous}
                                             onChange={(e) => setFormData({ ...formData, is_anonymous: e.target.checked })}
@@ -424,12 +527,12 @@ const Register = () => {
                                         <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                                     </div>
                                     <span className="text-[11px] text-gray-500 font-bold leading-relaxed group-hover:text-gray-700">
-                                        Anonym spenden (Name wird nicht auf der Spenderwand angezeigt)
+                                        {t.anonymousLabel}
                                     </span>
                                 </label>
 
                                 <label className="flex items-start space-x-3 cursor-pointer group">
-                                    <div className="relative mt-1">
+                                    <div className="relative mt-1 shrink-0">
                                         <input type="checkbox" required className="peer hidden"
                                             checked={formData.mandate_accepted}
                                             onChange={(e) => { setErrorMsg(''); setFormData({ ...formData, mandate_accepted: e.target.checked }); }}
@@ -438,24 +541,24 @@ const Register = () => {
                                         <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                                     </div>
                                     <span className="text-[11px] text-gray-500 font-medium leading-relaxed group-hover:text-gray-700">
-                                        Ich ermächtige Al-Rahma e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom Al-Rahma e.V. auf mein Konto gezogenen Lastschriften einzulösen.
+                                        {t.mandateLabel}
                                     </span>
                                 </label>
                             </div>
                         </div>
 
-                        {/* Fehlermeldung */}
+                        {/* Error */}
                         {errorMsg && (
                             <motion.div
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-5 py-4"
                             >
-                                <div className="mt-0.5 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <div className="mt-0.5 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                                     <span className="text-red-600 text-xs font-black">!</span>
                                 </div>
                                 <div>
-                                    <p className="font-bold text-sm">Registrierung nicht möglich</p>
+                                    <p className="font-bold text-sm">{t.errorTitle}</p>
                                     <p className="text-xs mt-0.5 text-red-500">{errorMsg}</p>
                                 </div>
                             </motion.div>
@@ -469,7 +572,7 @@ const Register = () => {
                                 <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    <span>Jetzt Spenden: {(formData.sq_meters * pricePerUnit).toFixed(2)}€/Monat</span>
+                                    <span>{t.submitBtn((formData.sq_meters * pricePerUnit).toFixed(2))}</span>
                                     <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
