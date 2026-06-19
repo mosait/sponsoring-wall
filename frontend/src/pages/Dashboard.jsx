@@ -65,6 +65,7 @@ const Dashboard = () => {
     // Queue für verzögertes Anzeigen
     const incomingQueueRef = useRef([]);
     const queueTimerRef = useRef(null);
+    const seenIdsRef = useRef(new Set());
 
     const dt = DASH_T[lang];
     // Responsive scale: 1.0 at 1920px TV, down to 0.3 on small screens
@@ -132,7 +133,7 @@ const Dashboard = () => {
         container.scrollTo({ top: targetScroll, behavior: 'smooth' });
     };
 
-    // Re-fetch all stats from DB (used for UPDATE/DELETE)
+    // Re-fetch all stats from DB (used for all realtime events)
     const refetchStats = async () => {
         const { data, error } = await supabase
             .from('sponsors_public')
@@ -158,11 +159,19 @@ const Dashboard = () => {
                 bookedIndices: Array.from({ length: totalSq }, (_, i) => i)
             });
 
-            setChatMessages(data.slice(0, 10).map(s => ({
-                id: s.id, name: s.is_anonymous ? 'Anonym' : s.full_name,
-                amount: s.sq_meters, isCash: s.is_cash, cashAmount: s.total_amount,
-                time: new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            })));
+            // Queue only genuinely new entries into the live chat feed
+            const newEntries = data.filter(s => !seenIdsRef.current.has(s.id));
+            newEntries.forEach(s => {
+                seenIdsRef.current.add(s.id);
+                addToIncomingQueue({
+                    id: s.id,
+                    name: s.is_anonymous ? 'Anonym' : s.full_name,
+                    amount: s.sq_meters,
+                    isCash: s.is_cash,
+                    cashAmount: s.total_amount,
+                    time: new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+            });
         }
     };
 
@@ -196,6 +205,8 @@ const Dashboard = () => {
                     totalAmount: totalAmtBank, totalAmountCash: totalAmtCash,
                     bookedIndices: Array.from({ length: totalSq }, (_, i) => i)
                 });
+                // Mark all existing sponsors as seen so realtime only queues genuinely new ones
+                data.forEach(s => seenIdsRef.current.add(s.id));
                 // Initiale Nachrichten direkt setzen (kein Queue-Delay beim Laden)
                 setChatMessages(data.slice(0, 10).map(s => ({
                     id: s.id, name: s.is_anonymous ? 'Anonym' : s.full_name,
@@ -207,44 +218,10 @@ const Dashboard = () => {
         };
         fetchInitialState();
 
-        const unsubscribe = subscribeToSponsors((payload) => {
-            const eventType = payload.eventType;
-
-            if (eventType === 'INSERT') {
-                const data = payload.new;
-                if (!data) return;
-
-                // Neue Nachrichten in Queue — kommen mit 1 Sek Abstand
-                addToIncomingQueue({
-                    id: data.id || Date.now(),
-                    name: data.is_anonymous ? 'Anonym' : data.full_name,
-                    amount: data.sq_meters,
-                    isCash: data.iban === 'CASH',
-                    cashAmount: data.total_amount,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                });
-
-                setStats(prev => {
-                    const sqToAdd = Number(data.sq_meters || 0);
-                    const newTotal = prev.totalSqMeters + sqToAdd;
-                    const currentProgInt = Math.floor((newTotal / BASE_GOAL) * 10);
-                    if (currentProgInt > lastProgressRef.current) {
-                        setMilestoneCelebration(currentProgInt * 10);
-                        triggerMilestoneConfetti();
-                        setTimeout(() => setMilestoneCelebration(null), 5000);
-                        lastProgressRef.current = currentProgInt;
-                    }
-                    return {
-                        ...prev, totalSponsors: prev.totalSponsors + 1, totalSqMeters: newTotal,
-                        totalAmount: data.iban !== 'CASH' ? prev.totalAmount + Number(data.total_amount || 0) : prev.totalAmount,
-                        totalAmountCash: data.iban === 'CASH' ? (prev.totalAmountCash || 0) + Number(data.total_amount || 0) : (prev.totalAmountCash || 0),
-                        bookedIndices: Array.from({ length: newTotal }, (_, i) => i)
-                    };
-                });
-            } else if (eventType === 'UPDATE' || eventType === 'DELETE') {
-                // Re-fetch from DB to get accurate totals
-                refetchStats();
-            }
+        const unsubscribe = subscribeToSponsors(() => {
+            // payload.new is null for anon subscribers due to RLS blocking SELECT on sponsors.
+            // Always refetch from sponsors_public (which anon can read) for all event types.
+            refetchStats();
         });
 
         const boostChannel = supabase.channel('boost-request')
