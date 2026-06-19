@@ -124,7 +124,7 @@ AS $$
 $$;
 GRANT EXECUTE ON FUNCTION public.get_sponsor_for_registration(TEXT) TO anon;
 
-CREATE OR REPLACE FUNCTION public.boost_update_sponsor(p_iban TEXT, p_add_sqm INT, p_price NUMERIC)
+CREATE OR REPLACE FUNCTION public.boost_update_sponsor(p_iban TEXT, p_add_sqm INT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public
@@ -133,7 +133,11 @@ DECLARE
   v_id INT;
   v_sq INT;
   v_amount NUMERIC;
+  v_price NUMERIC;
 BEGIN
+  SELECT price_per_unit INTO v_price FROM public.project_settings LIMIT 1;
+  IF NOT FOUND THEN RETURN FALSE; END IF;
+
   SELECT id, sq_meters, total_amount INTO v_id, v_sq, v_amount
     FROM public.sponsors WHERE iban = p_iban LIMIT 1;
   IF NOT FOUND THEN
@@ -141,12 +145,12 @@ BEGIN
   END IF;
   UPDATE public.sponsors
     SET sq_meters = v_sq + p_add_sqm,
-        total_amount = v_amount + (p_add_sqm * p_price)
+        total_amount = v_amount + (p_add_sqm * v_price)
     WHERE id = v_id;
   RETURN TRUE;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(TEXT, INT, NUMERIC) TO anon;
+GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(TEXT, INT) TO anon;
 
 CREATE OR REPLACE FUNCTION public.get_public_settings()
 RETURNS TABLE(goal_sq_meters NUMERIC, price_per_unit NUMERIC, dashboard_locked BOOLEAN)

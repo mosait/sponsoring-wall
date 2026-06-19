@@ -217,7 +217,6 @@ const Register = () => {
             .rpc('boost_update_sponsor', {
                 p_iban: boostModal.iban,
                 p_add_sqm: sqmToAdd,
-                p_price: pricePerUnit
             });
 
         setBoostLoading(false);
