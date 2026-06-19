@@ -48,9 +48,7 @@ INSERT INTO public.project_settings (goal_sq_meters, price_per_unit, dashboard_l
 SELECT 2480, 15, FALSE WHERE NOT EXISTS (SELECT 1 FROM public.project_settings);
 
 -- 5. VIEWS & RIGHTS
-CREATE OR REPLACE VIEW public.sponsors_public
-WITH (security_invoker = true)
-AS
+CREATE OR REPLACE VIEW public.sponsors_public AS
 SELECT
   id,
   full_name,
