@@ -146,12 +146,14 @@ export default function Admin() {
       setTotpChallengeId(ch.id);
       setAuthStep('totp-challenge');
     } else {
-      // Unenroll any stale unverified factor left over from an incomplete previous enrollment
-      const unverified = factorsData?.totp?.find(f => f.status === 'unverified');
-      if (unverified) {
-        await supabase.auth.mfa.unenroll({ factorId: unverified.id });
+      // Unenroll ALL stale unverified factors left over from incomplete previous enrollments
+      const unverifiedList = factorsData?.totp?.filter(f => f.status === 'unverified') ?? [];
+      for (const f of unverifiedList) {
+        await supabase.auth.mfa.unenroll({ factorId: f.id });
       }
-      const { data: en, error: enrollErr } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Admin' });
+      // Use a unique friendly name to avoid collision if a prior unenroll didn't propagate in time
+      const friendlyName = 'Admin-' + Date.now();
+      const { data: en, error: enrollErr } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName });
       if (enrollErr || !en) throw new Error(enrollErr?.message || 'TOTP enrollment failed');
       const { data: ch } = await supabase.auth.mfa.challenge({ factorId: en.id });
       setTotpFactorId(en.id);
