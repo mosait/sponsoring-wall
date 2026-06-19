@@ -134,9 +134,11 @@ const Register = () => {
         const boostChannel = supabase.channel('boost-request')
             .on('broadcast', { event: 'boost' }, ({ payload }) => {
                 const registered = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
-                setBoostModal({ message: payload.message, ...(registered || {}) });
-                setBoostAmount('');
-                setBoostSuccess(false);
+                if (registered) {
+                    setBoostModal({ message: payload.message, ...registered });
+                    setBoostAmount('');
+                    setBoostSuccess(false);
+                }
             })
             .subscribe();
 

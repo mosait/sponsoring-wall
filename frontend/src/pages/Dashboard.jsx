@@ -80,6 +80,19 @@ const Dashboard = () => {
         return () => window.removeEventListener('resize', handler);
     }, []);
 
+    // Force the browser to treat the layout viewport as 1920px on desktop screens.
+    // This makes the browser scale the TV layout to fit any screen automatically —
+    // identical to what the user was achieving by manually zooming to 50%.
+    // On mobile (screen width < 1024px) we leave the viewport untouched.
+    useEffect(() => {
+        if (window.screen.width < 1024) return;
+        const meta = document.querySelector('meta[name=viewport]');
+        if (!meta) return;
+        const original = meta.content;
+        meta.content = 'width=1920';
+        return () => { meta.content = original; };
+    }, []);
+
     const toggleLang = () => {
         const next = lang === 'de' ? 'ar' : 'de';
         setLang(next);
@@ -227,9 +240,11 @@ const Dashboard = () => {
         const boostChannel = supabase.channel('boost-request')
             .on('broadcast', { event: 'boost' }, ({ payload }) => {
                 const registered = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
-                setBoostModal({ message: payload.message, ...(registered || {}) });
-                setBoostAmount('');
-                setBoostSuccess(false);
+                if (registered) {
+                    setBoostModal({ message: payload.message, ...registered });
+                    setBoostAmount('');
+                    setBoostSuccess(false);
+                }
             })
             .subscribe();
 
