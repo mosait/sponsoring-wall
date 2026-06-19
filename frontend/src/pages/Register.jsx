@@ -182,41 +182,17 @@ const Register = () => {
             ? parseFloat(formData.monthlyEuro || 0)
             : formData.sq_meters * pricePerUnit;
 
-        // Prüfen ob IBAN bereits existiert (via SECURITY DEFINER Funktion — kein direkter SELECT)
-        const { data: existingRows } = await supabase
-            .rpc('get_sponsor_for_registration', { p_iban: cleanIban });
-        const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
-
-        let error;
-        if (existing) {
-            // Bestehenden Eintrag aktualisieren: m² und Betrag summieren
-            const result = await supabase
-                .from('sponsors')
-                .update({
-                    full_name: cleanName,
-                    email: cleanEmail,
-                    phone: cleanPhone,
-                    sq_meters: existing.sq_meters + addedSqMeters,
-                    total_amount: Number(existing.total_amount) + addedAmount,
-                    mandate_accepted: formData.mandate_accepted,
-                    is_anonymous: formData.is_anonymous,
-                })
-                .eq('id', existing.id);
-            error = result.error;
-        } else {
-            // Neuen Eintrag erstellen
-            const result = await supabase.from('sponsors').insert([{
-                full_name: cleanName,
-                email: cleanEmail,
-                phone: cleanPhone,
-                iban: cleanIban,
-                sq_meters: addedSqMeters,
-                mandate_accepted: formData.mandate_accepted,
-                is_anonymous: formData.is_anonymous,
-                total_amount: addedAmount,
-            }]);
-            error = result.error;
-        }
+        // Upsert via SECURITY DEFINER Funktion — kein direkter Tabellenzugriff nötig
+        const { error } = await supabase.rpc('register_sponsor', {
+            p_full_name: cleanName,
+            p_email: cleanEmail,
+            p_phone: cleanPhone,
+            p_iban: cleanIban,
+            p_sq_meters: addedSqMeters,
+            p_mandate_accepted: formData.mandate_accepted,
+            p_is_anonymous: formData.is_anonymous,
+            p_total_amount: addedAmount,
+        });
 
         if (!error) {
             setSubmitted(true);

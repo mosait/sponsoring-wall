@@ -159,6 +159,55 @@ AS $$
 $$;
 GRANT EXECUTE ON FUNCTION public.get_public_settings() TO anon;
 
+-- Registrierung: INSERT neuer Sponsor oder UPDATE bei bekannter IBAN (atomisch, kein direkter Tabellenzugriff für anon nötig)
+CREATE OR REPLACE FUNCTION public.register_sponsor(
+    p_full_name TEXT,
+    p_email TEXT,
+    p_phone TEXT,
+    p_iban TEXT,
+    p_sq_meters INT,
+    p_mandate_accepted BOOLEAN,
+    p_is_anonymous BOOLEAN,
+    p_total_amount NUMERIC
+)
+RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_id INT;
+    v_sq INT;
+    v_amount NUMERIC;
+BEGIN
+    SELECT id, sq_meters, total_amount
+    INTO v_id, v_sq, v_amount
+    FROM public.sponsors
+    WHERE iban = p_iban
+    LIMIT 1;
+
+    IF FOUND THEN
+        UPDATE public.sponsors SET
+            full_name        = p_full_name,
+            email            = p_email,
+            phone            = p_phone,
+            sq_meters        = v_sq + p_sq_meters,
+            total_amount     = v_amount + p_total_amount,
+            mandate_accepted = p_mandate_accepted,
+            is_anonymous     = p_is_anonymous
+        WHERE id = v_id;
+        RETURN jsonb_build_object('id', v_id, 'action', 'updated');
+    ELSE
+        INSERT INTO public.sponsors
+            (full_name, email, phone, iban, sq_meters, mandate_accepted, is_anonymous, total_amount)
+        VALUES
+            (p_full_name, p_email, p_phone, p_iban, p_sq_meters, p_mandate_accepted, p_is_anonymous, p_total_amount)
+        RETURNING id INTO v_id;
+        RETURN jsonb_build_object('id', v_id, 'action', 'inserted');
+    END IF;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.register_sponsor(TEXT, TEXT, TEXT, TEXT, INT, BOOLEAN, BOOLEAN, NUMERIC) TO anon;
+
 -- 7. REALTIME
 DO $$
 BEGIN
