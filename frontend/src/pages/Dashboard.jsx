@@ -61,6 +61,8 @@ const Dashboard = () => {
     const [boostSuccess, setBoostSuccess] = useState(false);
     const lastProgressRef = useRef(0);
     const carpetScrollRef = useRef(null);
+    const headerRef = useRef(null);
+    const [headerHeight, setHeaderHeight] = useState(0);
 
     // Queue für verzögertes Anzeigen
     const incomingQueueRef = useRef([]);
@@ -78,6 +80,20 @@ const Dashboard = () => {
         const handler = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handler);
         return () => window.removeEventListener('resize', handler);
+    }, []);
+
+    // Track actual header height so the grid never slides underneath it
+    useEffect(() => {
+        if (!headerRef.current) return;
+        const ro = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                setHeaderHeight(entry.contentRect.height +
+                    parseFloat(getComputedStyle(entry.target).paddingTop) +
+                    parseFloat(getComputedStyle(entry.target).paddingBottom));
+            }
+        });
+        ro.observe(headerRef.current);
+        return () => ro.disconnect();
     }, []);
 
     // Force the browser to treat the layout viewport as 1920px on desktop screens.
@@ -467,7 +483,7 @@ const Dashboard = () => {
             </div>
 
             {/* HEADER */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'clamp(8px, 3.1vw, 60px)', padding: 'clamp(12px, 2.3vw, 44px) clamp(16px, 4.2vw, 80px)', borderBottom: '3px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
+            <div ref={headerRef} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'clamp(8px, 3.1vw, 60px)', padding: 'clamp(12px, 2.3vw, 44px) clamp(16px, 4.2vw, 80px)', borderBottom: '3px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', flexShrink: 0 }}>
                     <span style={{ color: '#059669', fontSize: 'clamp(12px, 2.08vw, 40px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em' }}>🕌 {dt.orgName}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.52vw, 10px)' }}>
@@ -524,7 +540,7 @@ const Dashboard = () => {
             </div>
 
             {/* GEBETSPLATZ GRID */}
-            <div style={{ flex: 1, padding: `clamp(12px, 1.9vw, 36px) clamp(16px, 3.75vw, 72px)`, marginTop: 'clamp(90px, 11.5vw, 220px)', overflow: 'hidden' }}>
+            <div style={{ flex: 1, padding: `clamp(12px, 1.9vw, 36px) clamp(16px, 3.75vw, 72px)`, marginTop: headerHeight || 'clamp(90px, 11.5vw, 220px)', overflow: 'hidden' }}>
                 <div ref={carpetScrollRef}
                     style={{ height: '100%', position: 'relative', borderRadius: 'clamp(16px, 2.9vw, 56px)', overflow: 'auto', border: '3px solid #6ee7b7', background: 'linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%)', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <div style={{ position: 'sticky', top: 0, left: 0, right: 0, height: 0, zIndex: 10, pointerEvents: 'none' }}>
