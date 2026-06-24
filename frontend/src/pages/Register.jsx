@@ -349,19 +349,19 @@ const Register = () => {
                             {t.badge}
                         </div>
                         <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black mb-6 leading-[1.1] uppercase">{t.heading}</h1>
-                        <p className="text-gray-400 text-base sm:text-lg leading-relaxed mb-8">
+                        <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8">
                             {t.description}
                         </p>
                         <div className="flex items-center space-x-4 bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div className="text-yellow-300 font-black text-xl sm:text-2xl">{pricePerUnit}€</div>
-                            <div className="text-gray-400 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
+                            <div className="text-white/70 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
                         </div>
                     </div>
                     <div className="mt-10 pt-10 border-t border-white/10 relative z-10">
                         <div className="flex items-center space-x-4">
-                            <Building2 className="w-8 h-8 text-gray-500 shrink-0" />
+                            <Building2 className="w-8 h-8 text-white/50 shrink-0" />
                             <div>
-                                <div className="font-bold uppercase tracking-widest text-xs opacity-50">{t.projectLabel}</div>
+                                <div className="font-bold uppercase tracking-widest text-xs text-white/50">{t.projectLabel}</div>
                                 <div className="font-black text-sm">{t.projectName}</div>
                             </div>
                         </div>
