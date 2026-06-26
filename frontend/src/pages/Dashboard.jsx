@@ -7,7 +7,7 @@ import SajadahElement from '../components/SajadahElement';
 
 const DASH_T = {
     de: {
-        orgName: 'IZS – Islamisches Zentrum Stuttgart',
+        orgName: 'Islamisches Zentrum Stuttgart',
         live: 'Live',
         spender: 'Spender',
         milestone: 'Meilenstein Erreicht!',
@@ -94,20 +94,21 @@ const Dashboard = () => {
         });
         ro.observe(headerRef.current);
         return () => ro.disconnect();
-    }, []);
+    }, [dashboardLocked]); // re-observe after lock/unlock so height recalculates
 
     // Force the browser to treat the layout viewport as 1920px on desktop screens.
     // This makes the browser scale the TV layout to fit any screen automatically —
     // identical to what the user was achieving by manually zooming to 50%.
     // On mobile (screen width < 1024px) we leave the viewport untouched.
     useEffect(() => {
+        if (dashboardLocked) return; // lock screen doesn't need the 1920 viewport
         if (window.screen.width < 1024) return;
         const meta = document.querySelector('meta[name=viewport]');
         if (!meta) return;
         const original = meta.content;
         meta.content = 'width=1920';
         return () => { meta.content = original; };
-    }, []);
+    }, [dashboardLocked]);
 
     const toggleLang = () => {
         const next = lang === 'de' ? 'ar' : 'de';
@@ -399,11 +400,10 @@ const Dashboard = () => {
 
     if (dashboardLocked) {
         return (
-            <div style={{ minHeight: '100vh', background: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ textAlign: 'center', color: '#fff', padding: '40px' }}>
-                    <div style={{ fontSize: 'clamp(60px, 10vw, 120px)', marginBottom: '24px' }}>🕌</div>
-                    <div style={{ fontSize: 'clamp(24px, 4vw, 56px)', fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '12px' }}>IZS</div>
-                    <div style={{ fontSize: 'clamp(14px, 2vw, 28px)', fontWeight: 600, opacity: 0.8, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Islamisches Zentrum Stuttgart</div>
+            <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ textAlign: 'center', padding: '40px' }}>
+                    <img src="/logo.png" alt="IZS Logo" style={{ width: 'clamp(160px, 20vw, 320px)', marginBottom: '32px', display: 'block', margin: '0 auto 32px' }} />
+                    <div style={{ fontSize: 'clamp(11px, 1.4vw, 20px)', fontWeight: 700, color: '#059669', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Islamisches Zentrum Stuttgart</div>
                 </motion.div>
             </div>
         );
@@ -513,11 +513,12 @@ const Dashboard = () => {
 
             {/* HEADER */}
             <div ref={headerRef} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'clamp(8px, 3.1vw, 60px)', padding: 'clamp(12px, 2.3vw, 44px) clamp(16px, 4.2vw, 80px)', borderBottom: '3px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', flexShrink: 0 }}>
-                    <span style={{ color: '#059669', fontSize: 'clamp(12px, 2.08vw, 40px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em' }}>🕌 {dt.orgName}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.52vw, 10px)' }}>
-                        <span style={{ width: S(16), height: S(16), borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                        <span style={{ color: '#9ca3af', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.live}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.2vw, 24px)', flexShrink: 0 }}>
+                    <img src="/logo.png" alt="IZS Logo" style={{ height: 'clamp(60px, 8vw, 150px)', width: 'auto', display: 'block' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        <span style={{ color: '#059669', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.18em', lineHeight: 1.35 }}>Islamisches</span>
+                        <span style={{ color: '#059669', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.18em', lineHeight: 1.35 }}>Zentrum</span>
+                        <span style={{ color: '#059669', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.18em', lineHeight: 1.35 }}>Stuttgart</span>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(6px, 0.94vw, 18px)', flexShrink: 0 }}>
@@ -549,7 +550,7 @@ const Dashboard = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(2px, 0.3vw, 6px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#f0fdf4', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #bbf7d0', flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.6vw, 12px)' }}>
-                        <Euro size={S(32)} style={{ color: '#10b981' }} />
+                        <Euro size={S(28)} style={{ color: '#10b981' }} />
                         <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
                             {donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
@@ -564,11 +565,17 @@ const Dashboard = () => {
                         <span style={{ color: '#b45309', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.kauf}</span>
                     </div>
                 )}
-                {/* Language Toggle */}
-                <button onClick={toggleLang}
-                    style={{ padding: 'clamp(6px, 0.63vw, 12px) clamp(10px, 1.04vw, 20px)', borderRadius: 'clamp(8px, 0.63vw, 12px)', border: '2px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: 'clamp(10px, 1.04vw, 20px)', fontWeight: 900, cursor: 'pointer', flexShrink: 0, letterSpacing: '0.05em' }}>
-                    {dt.langToggle}
-                </button>
+                {/* Language Toggle + Live */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(4px, 0.5vw, 10px)', flexShrink: 0 }}>
+                    <button onClick={toggleLang}
+                        style={{ padding: 'clamp(6px, 0.63vw, 12px) clamp(10px, 1.04vw, 20px)', borderRadius: 'clamp(8px, 0.63vw, 12px)', border: '2px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: 'clamp(10px, 1.04vw, 20px)', fontWeight: 900, cursor: 'pointer', letterSpacing: '0.05em' }}>
+                        {dt.langToggle}
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.4vw, 8px)' }}>
+                        <span style={{ width: 'clamp(6px, 0.6vw, 12px)', height: 'clamp(6px, 0.6vw, 12px)', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                        <span style={{ color: '#9ca3af', fontSize: 'clamp(7px, 0.8vw, 16px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.live}</span>
+                    </div>
+                </div>
             </div>
 
             {/* GEBETSPLATZ GRID */}
