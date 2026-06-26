@@ -11,7 +11,7 @@ const REG_T = {
         description: 'Sichern Sie sich einen oder mehrere Gebetsplätze in der Moschee und hinterlassen Sie ein bleibendes Erbe.',
         priceUnit: 'pro Gebetsplatz / Monat',
         projectLabel: 'Projekt',
-        projectName: 'IZS Gebetsplatz 2025',
+        projectName: 'IZS Gebetsplatz 2026',
         nameLabel: 'Vollständiger Name',
         namePlaceholder: 'z.B. Abdullah Müller',
         emailLabel: 'E-Mail Adresse',
@@ -28,8 +28,9 @@ const REG_T = {
         ibanLabel: 'IBAN',
         ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
         anonymousLabel: 'Anonym spenden (Name wird nicht auf der Spenderwand angezeigt)',
+        noticeLabel: 'Ich verstehe, dass diese Spende keinen festen Gebetsplatz reserviert, sondern dazu dient, die Moschee am Laufen zu halten und offen zu halten.',
         mandateLabel: 'Ich ermächtige IZS – Islamisches Zentrum Stuttgart e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom IZS – Islamisches Zentrum Stuttgart e.V. auf mein Konto gezogenen Lastschriften einzulösen.',
-        submitBtn: (amount) => `Jetzt Spenden: ${amount}€/Monat`,
+        submitBtn: (amount) => `Jetzt Spenden ${amount}€/Monat`,
         successHeading: 'Herzlichen Dank!',
         successText: 'Ihre Spende wurde erfolgreich registriert. Sie finden Ihren Namen in Kürze auf der Spenderwand.',
         nextBtn: 'Nächste Registrierung',
@@ -46,6 +47,10 @@ const REG_T = {
         boostCustom: 'Eigene Anzahl',
         boostSaving: 'Speichern...',
         boostIncrease: 'Erhöhen',
+        stopFullHeading: 'Jazakumullahu Khairan!',
+        stopFullText: 'Wir haben unsere Mitgliederzahl erreicht. Vielen Dank für Ihr Interesse – die Registrierung ist derzeit geschlossen.',
+        stopMaintenanceHeading: 'Kurze Pause',
+        stopMaintenanceText: 'Die Registrierung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.',
         langToggle: 'عربي',
         dir: 'ltr',
     },
@@ -55,7 +60,7 @@ const REG_T = {
         description: 'احجز مصلى أو أكثر في المسجد وابقَ أثراً دائماً.',
         priceUnit: 'لكل مصلى / شهرياً',
         projectLabel: 'المشروع',
-        projectName: 'IZS Gebetsplatz 2025',
+        projectName: 'IZS Gebetsplatz 2026',
         nameLabel: 'الاسم الكامل',
         namePlaceholder: 'مثال: عبدالله مولر',
         emailLabel: 'البريد الإلكتروني',
@@ -72,8 +77,9 @@ const REG_T = {
         ibanLabel: 'IBAN',
         ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
         anonymousLabel: 'تبرع بشكل مجهول (لن يُعرض اسمك على جدار المتبرعين)',
+        noticeLabel: 'أفهم أن هذا التبرع لا يحجز مصلى محدداً، بل يساعد في الإبقاء على المسجد مفتوحاً وتغطية تكاليفه الجارية.',
         mandateLabel: 'أفوّض IZS – Islamisches Zentrum Stuttgart e.V. بخصم المدفوعات من حسابي مباشرةً. وفي الوقت ذاته أوجّه مصرفي بصرف هذه المدفوعات.',
-        submitBtn: (amount) => `تبرع الآن: ${amount}€/شهر`,
+        submitBtn: (amount) => `تبرع الآن ${amount}€/شهر`,
         successHeading: 'شكراً جزيلاً!',
         successText: 'تم تسجيل تبرعك بنجاح. سيظهر اسمك قريباً على جدار المتبرعين.',
         nextBtn: 'التسجيل التالي',
@@ -90,6 +96,10 @@ const REG_T = {
         boostCustom: 'عدد مخصص',
         boostSaving: 'جارٍ الحفظ...',
         boostIncrease: 'رفع',
+        stopFullHeading: 'جزاكم الله خيراً!',
+        stopFullText: 'لقد وصلنا إلى عدد الأعضاء المطلوب. شكراً لاهتمامكم – التسجيل مغلق حالياً.',
+        stopMaintenanceHeading: 'توقف مؤقت',
+        stopMaintenanceText: 'التسجيل غير متاح مؤقتاً. يرجى المحاولة مرة أخرى لاحقاً.',
         langToggle: 'DE',
         dir: 'rtl',
     },
@@ -101,6 +111,7 @@ const Register = () => {
     const [submitted, setSubmitted] = useState(false);
     const [pricePerUnit, setPricePerUnit] = useState(15);
     const [errorMsg, setErrorMsg] = useState('');
+    const [registerStopMode, setRegisterStopMode] = useState('open');
     const [boostModal, setBoostModal] = useState(null);
     const [boostAmount, setBoostAmount] = useState('');
     const [boostLoading, setBoostLoading] = useState(false);
@@ -113,6 +124,7 @@ const Register = () => {
         sq_meters: 1,
         mandate_accepted: false,
         is_anonymous: false,
+        notice_understood: false,
         inputMode: 'sqm',
         monthlyEuro: ''
     });
@@ -129,7 +141,15 @@ const Register = () => {
         supabase.rpc('get_public_settings').then(({ data }) => {
             const s = Array.isArray(data) ? data[0] : data;
             if (s?.price_per_unit) setPricePerUnit(s.price_per_unit);
+            if (s?.register_stop_mode) setRegisterStopMode(s.register_stop_mode);
         });
+
+        const settingsChannel = supabase
+            .channel('register_settings_changes')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'project_settings' }, ({ new: newData }) => {
+                if (newData?.register_stop_mode) setRegisterStopMode(newData.register_stop_mode);
+            })
+            .subscribe();
 
         const boostChannel = supabase.channel('boost-request')
             .on('broadcast', { event: 'boost' }, ({ payload }) => {
@@ -142,7 +162,10 @@ const Register = () => {
             })
             .subscribe();
 
-        return () => boostChannel.unsubscribe();
+        return () => {
+            boostChannel.unsubscribe();
+            settingsChannel.unsubscribe();
+        };
     }, []);
 
     const validateIBAN = (iban) => {
@@ -318,7 +341,7 @@ const Register = () => {
                             setFormData({
                                 full_name: '', email: '', phone: '', iban: '',
                                 sq_meters: 1, mandate_accepted: false,
-                                is_anonymous: false, inputMode: 'sqm', monthlyEuro: '', customSqm: ''
+                                is_anonymous: false, notice_understood: false, inputMode: 'sqm', monthlyEuro: '', customSqm: ''
                             });
                             setErrorMsg('');
                             setSubmitted(false);
@@ -332,21 +355,52 @@ const Register = () => {
         );
     }
 
+    if (registerStopMode === 'full' || registerStopMode === 'maintenance') {
+        const isFull = registerStopMode === 'full';
+        return (
+            <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center p-6" dir={t.dir}>
+                <div className="text-center">
+                    <button onClick={toggleLang}
+                        className="mb-8 px-4 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-600 text-xs font-black tracking-widest hover:bg-gray-50 transition-all">
+                        {t.langToggle}
+                    </button>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="max-w-md w-full bg-white rounded-3xl p-10 text-center shadow-xl mx-auto"
+                    >
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isFull ? 'bg-green-100' : 'bg-blue-100'}`}>
+                            <span className="text-4xl">{isFull ? '🕌' : '🔧'}</span>
+                        </div>
+                        <h2 className={`text-2xl font-black mb-4 uppercase tracking-tight ${isFull ? 'text-[#1a6b3c]' : 'text-blue-700'}`}>
+                            {isFull ? t.stopFullHeading : t.stopMaintenanceHeading}
+                        </h2>
+                        <p className="text-gray-500 leading-relaxed">
+                            {isFull ? t.stopFullText : t.stopMaintenanceText}
+                        </p>
+                    </motion.div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-[#f1f5f9] py-8 sm:py-12 px-4 sm:px-6 flex items-start md:items-center justify-center" dir={t.dir}>
+        <div className="min-h-screen bg-[#f1f5f9] py-8 sm:py-12 px-4 sm:px-6 flex items-start justify-center" dir={t.dir}>
             {boostModalJSX}
             <div className="max-w-4xl w-full grid md:grid-cols-2 bg-white rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(255,255,255,0.05)] border border-white/10">
 
                 {/* Left Side */}
                 <div className="bg-[#1a6b3c] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
-                    {/* Language Toggle */}
-                    <button onClick={toggleLang}
-                        className="absolute top-5 right-5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all z-10">
-                        {t.langToggle}
-                    </button>
                     <div className="relative z-10">
-                        <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold tracking-[0.2em] uppercase mb-6 border border-white/10">
-                            {t.badge}
+                        <div className="flex items-start justify-between gap-3 mb-6">
+                            <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold tracking-[0.2em] uppercase border border-white/10">
+                                {t.badge}
+                            </div>
+                            {/* Language Toggle */}
+                            <button onClick={toggleLang}
+                                className="shrink-0 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all">
+                                {t.langToggle}
+                            </button>
                         </div>
                         <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black mb-6 leading-[1.1] uppercase">{t.heading}</h1>
                         <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8">
@@ -358,11 +412,16 @@ const Register = () => {
                         </div>
                     </div>
                     <div className="mt-10 pt-10 border-t border-white/10 relative z-10">
-                        <div className="flex items-center space-x-4">
-                            <Building2 className="w-8 h-8 text-white/50 shrink-0" />
-                            <div>
-                                <div className="font-bold uppercase tracking-widest text-xs text-white/50">{t.projectLabel}</div>
-                                <div className="font-black text-sm">{t.projectName}</div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <Building2 className="w-8 h-8 text-white/50 shrink-0" />
+                                <div>
+                                    <div className="font-bold uppercase tracking-widest text-xs text-white/50">{t.projectLabel}</div>
+                                    <div className="font-black text-sm">{t.projectName}</div>
+                                </div>
+                            </div>
+                            <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
+                                <img src="/Logo.png" alt="IZS Logo" className="w-16 h-16 object-contain" />
                             </div>
                         </div>
                     </div>
@@ -370,7 +429,7 @@ const Register = () => {
                 </div>
 
                 {/* Right Side: Form */}
-                <div className="p-6 sm:p-10 md:overflow-y-auto md:max-h-[90vh] custom-scrollbar">
+                <div className="p-6 sm:p-10">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="grid grid-cols-1 gap-5">
 
@@ -390,7 +449,7 @@ const Register = () => {
                             </div>
 
                             {/* Email + Phone */}
-                            <div className="grid sm:grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 gap-5">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.emailLabel}</label>
                                     <div className="relative group">
@@ -434,15 +493,17 @@ const Register = () => {
                                 </div>
 
                                 {formData.inputMode === 'sqm' ? (
-                                    <div className="flex flex-wrap gap-2">
-                                        {[1, 2, 5, 10, 20].map((val) => (
-                                            <button key={val} type="button"
-                                                onClick={() => setFormData({ ...formData, sq_meters: val, customSqm: '' })}
-                                                className={`py-3 px-3 rounded-xl font-black text-sm transition-all border-2 ${!formData.customSqm && formData.sq_meters === val ? 'bg-[#1a6b3c] border-[#1a6b3c] text-white shadow-lg' : 'bg-gray-50 border-transparent text-gray-500 hover:border-gray-200'}`}
-                                            >{val}</button>
-                                        ))}
+                                    <div className="flex flex-col gap-2 w-fit">
+                                        <div className="flex gap-2">
+                                            {[1, 2, 5, 10, 20].map((val) => (
+                                                <button key={val} type="button"
+                                                    onClick={() => setFormData({ ...formData, sq_meters: val, customSqm: '' })}
+                                                    className={`py-3 px-4 rounded-xl font-black text-sm transition-all border-2 ${!formData.customSqm && formData.sq_meters === val ? 'bg-[#1a6b3c] border-[#1a6b3c] text-white shadow-lg' : 'bg-gray-50 border-transparent text-gray-500 hover:border-gray-200'}`}
+                                                >{val}</button>
+                                            ))}
+                                        </div>
                                         <input type="number"
-                                            className={`w-24 sm:w-28 bg-gray-50 border-2 rounded-xl py-3 px-3 outline-none transition-all font-bold text-center text-[#0c151a] text-sm placeholder:text-xs ${formData.customSqm ? 'border-[#1a6b3c] bg-white' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'}`}
+                                            className={`w-full bg-gray-50 border-2 rounded-xl py-3 px-4 outline-none transition-all font-bold text-[#0c151a] text-sm ${formData.customSqm ? 'border-[#1a6b3c] bg-white' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'}`}
                                             placeholder={t.customUnits} min="1"
                                             value={formData.customSqm || ''}
                                             onChange={(e) => {
@@ -508,6 +569,20 @@ const Register = () => {
 
                                 <label className="flex items-start space-x-3 cursor-pointer group">
                                     <div className="relative mt-1 shrink-0">
+                                        <input type="checkbox" className="peer hidden"
+                                            checked={formData.notice_understood}
+                                            onChange={(e) => setFormData({ ...formData, notice_understood: e.target.checked })}
+                                        />
+                                        <div className="w-5 h-5 border-2 border-gray-300 rounded peer-checked:bg-[#1a6b3c] peer-checked:border-[#1a6b3c] transition-all" />
+                                        <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
+                                    </div>
+                                    <span className="text-[11px] text-gray-500 font-medium leading-relaxed group-hover:text-gray-700">
+                                        {t.noticeLabel}
+                                    </span>
+                                </label>
+
+                                <label className="flex items-start space-x-3 cursor-pointer group">
+                                    <div className="relative mt-1 shrink-0">
                                         <input type="checkbox" required className="peer hidden"
                                             checked={formData.mandate_accepted}
                                             onChange={(e) => { setErrorMsg(''); setFormData({ ...formData, mandate_accepted: e.target.checked }); }}
@@ -541,13 +616,14 @@ const Register = () => {
 
                         <button
                             type="submit" disabled={loading}
-                            className="w-full py-5 bg-[#1a6b3c] text-white rounded-2xl font-black uppercase tracking-[0.2em] hover:bg-[#155430] transition-all flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed group shadow-xl shadow-[#1a6b3c]/20"
+                            className="w-full py-5 bg-[#1a6b3c] text-white rounded-2xl font-black uppercase tracking-[0.2em] hover:bg-[#155430] transition-all flex items-center justify-between px-6 disabled:opacity-50 disabled:cursor-not-allowed group shadow-xl shadow-[#1a6b3c]/20"
                         >
                             {loading ? (
-                                <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                                <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
                             ) : (
                                 <>
-                                    <span>{t.submitBtn((formData.sq_meters * pricePerUnit).toFixed(2))}</span>
+                                    <span className="text-4xl leading-none">✓</span>
+                                    <span className="flex-1 text-center">{t.submitBtn((formData.sq_meters * pricePerUnit).toFixed(2))}</span>
                                     <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}

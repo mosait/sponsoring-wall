@@ -73,7 +73,7 @@ const Dashboard = () => {
     // Responsive scale: 1.0 at 1920px TV, down to 0.3 on small screens
     const scale = Math.min(1, Math.max(0.3, windowWidth / 1920));
     const S = (px) => Math.round(px * scale);
-    const BASE_GOAL = 710;
+    const BASE_GOAL = 500;
     const COLS = windowWidth < 600 ? 15 : windowWidth < 1024 ? 25 : 40;
 
     useEffect(() => {
@@ -187,6 +187,22 @@ const Dashboard = () => {
                 totalAmount: totalAmtBank, totalAmountCash: totalAmtCash,
                 bookedIndices: Array.from({ length: totalSq }, (_, i) => i)
             });
+
+            // Build a lookup map for fast access
+            const dataMap = new Map(data.map(s => [s.id, s]));
+
+            // Update existing chat messages in-place if their values changed
+            setChatMessages(prev => prev.map(msg => {
+                const fresh = dataMap.get(msg.id);
+                if (!fresh) return msg;
+                return {
+                    ...msg,
+                    name: fresh.is_anonymous ? 'Anonym' : fresh.full_name,
+                    amount: fresh.sq_meters,
+                    isCash: fresh.is_cash,
+                    cashAmount: fresh.total_amount,
+                };
+            }));
 
             // Queue only genuinely new entries into the live chat feed
             const newEntries = data.filter(s => !seenIdsRef.current.has(s.id));
@@ -370,7 +386,7 @@ const Dashboard = () => {
     const totalForBar = Math.max(stats.totalSqMeters, BASE_GOAL);
     const greenPercent = goalReached ? (BASE_GOAL / totalForBar * 100) : (stats.totalSqMeters / BASE_GOAL * 100);
     const goldPercent = goalReached ? (overflowM2 / totalForBar * 100) : 0;
-    const donationTotal = (Number(stats.totalAmount || 0) * 12) + Number(stats.totalAmountCash || 0);
+    const donationTotal = Number(stats.totalAmount || 0) + Number(stats.totalAmountCash || 0);
 
     if (dashboardLocked) {
         return (
@@ -523,7 +539,7 @@ const Dashboard = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#f0fdf4', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #bbf7d0', flexShrink: 0 }}>
                     <Euro size={S(44)} style={{ color: '#10b981' }} />
                     <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
-                        &euro;{donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        {donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </span>
                 </div>
                 {goalReached && overflowM2 > 0 && (

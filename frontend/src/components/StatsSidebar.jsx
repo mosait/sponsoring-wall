@@ -26,12 +26,12 @@ const StatBox = ({ label, value, subLabel, icon: Icon, color = "text-white", del
 const StatsSidebar = ({ data, goal, pricePerUnit = 15 }) => {
     const totalSq = Number(data?.totalSqMeters || 0);
     const totalAmount = Number(data?.totalAmount || 0);
-    const targetGoal = Number(goal || 710);
+    const targetGoal = Number(goal || 500);
     const goalReached = totalSq >= targetGoal;
     const displaySq = Math.min(totalSq, targetGoal);
     const overflowM2 = Math.max(0, totalSq - targetGoal);
     // Use actual amounts from DB × 12 for yearly
-    const donationTotal = (Number(data?.totalAmount || 0) * 12) + Number(data?.totalAmountCash || 0);
+    const donationTotal = Number(data?.totalAmount || 0) + Number(data?.totalAmountCash || 0);
 
     const kaufTotal = overflowM2 * pricePerUnit * 12;
 
@@ -68,7 +68,7 @@ const StatsSidebar = ({ data, goal, pricePerUnit = 15 }) => {
                 <StatBox
                     label="Gesamtsumme"
                     value={`€${donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
-                    subLabel="Jährliche Abo-Beiträge"
+                    subLabel="Monatliche Beiträge"
                     icon={Euro}
                     color="text-emerald-400"
                     delay={0.3}

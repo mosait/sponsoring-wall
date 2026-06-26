@@ -188,11 +188,11 @@ GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(TEXT, INT) TO anon;
 -- Gibt nur die öffentlich benötigten Settings zurück (kein direkter Tabellenzugriff für anon)
 -- Dashboard: goal_sq_meters, dashboard_locked | Register: price_per_unit
 CREATE OR REPLACE FUNCTION public.get_public_settings()
-RETURNS TABLE(goal_sq_meters NUMERIC, price_per_unit NUMERIC, dashboard_locked BOOLEAN)
+RETURNS TABLE(goal_sq_meters NUMERIC, price_per_unit NUMERIC, dashboard_locked BOOLEAN, register_stop_mode TEXT)
 LANGUAGE sql SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT goal_sq_meters, price_per_unit, dashboard_locked FROM public.project_settings LIMIT 1;
+  SELECT goal_sq_meters, price_per_unit, dashboard_locked, register_stop_mode FROM public.project_settings LIMIT 1;
 $$;
 GRANT EXECUTE ON FUNCTION public.get_public_settings() TO anon;
 
