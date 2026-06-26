@@ -392,7 +392,7 @@ const Dashboard = () => {
         return (
             <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ textAlign: 'center' }}>
-                    <img src="/logo.png" alt="IZS Logo" style={{ width: '700px', maxWidth: '90vw' }} />
+                    <img src="/Logo.png" alt="IZS Logo" style={{ width: '700px', maxWidth: '90vw' }} />
                 </motion.div>
             </div>
         );
