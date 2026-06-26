@@ -430,7 +430,8 @@ const Register = () => {
                                 </div>
                             </div>
                             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
-                                <img src="/Logo.png" alt="IZS Logo" className="w-16 h-16 object-contain" />
+                                <img src="/logo.png" alt="IZS Logo" className="w-16 h-16 object-contain"
+                                    onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:28px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
                             </div>
                         </div>
                     </div>

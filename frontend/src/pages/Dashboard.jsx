@@ -399,9 +399,11 @@ const Dashboard = () => {
 
     if (dashboardLocked) {
         return (
-            <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ textAlign: 'center' }}>
-                    <img src="/Logo.png" alt="IZS Logo" style={{ width: '700px', maxWidth: '90vw' }} />
+            <div style={{ minHeight: '100vh', background: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} style={{ textAlign: 'center', color: '#fff', padding: '40px' }}>
+                    <div style={{ fontSize: 'clamp(60px, 10vw, 120px)', marginBottom: '24px' }}>🕌</div>
+                    <div style={{ fontSize: 'clamp(24px, 4vw, 56px)', fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '12px' }}>IZS</div>
+                    <div style={{ fontSize: 'clamp(14px, 2vw, 28px)', fontWeight: 600, opacity: 0.8, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Islamisches Zentrum Stuttgart</div>
                 </motion.div>
             </div>
         );
