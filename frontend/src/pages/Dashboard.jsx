@@ -235,6 +235,14 @@ const Dashboard = () => {
             })
             .subscribe();
 
+        // Polling fallback every 3s (in case Realtime publication not set for project_settings)
+        const settingsPoll = setInterval(() => {
+            supabase.rpc('get_public_settings').then(({ data }) => {
+                const s = Array.isArray(data) ? data[0] : data;
+                if (s) setDashboardLocked(s.dashboard_locked || false);
+            });
+        }, 3000);
+
         const fetchInitialState = async () => {
             const { data, error } = await supabase
                 .from('sponsors_public')
@@ -284,6 +292,7 @@ const Dashboard = () => {
             unsubscribe();
             settingsChannel.unsubscribe();
             boostChannel.unsubscribe();
+            clearInterval(settingsPoll);
             if (queueTimerRef.current) clearTimeout(queueTimerRef.current);
         };
     }, []);
@@ -536,11 +545,14 @@ const Dashboard = () => {
                     </span>
                     <span style={{ color: '#9ca3af', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.spender}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#f0fdf4', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #bbf7d0', flexShrink: 0 }}>
-                    <Euro size={S(44)} style={{ color: '#10b981' }} />
-                    <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
-                        {donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(2px, 0.3vw, 6px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#f0fdf4', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #bbf7d0', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.6vw, 12px)' }}>
+                        <Euro size={S(32)} style={{ color: '#10b981' }} />
+                        <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
+                            {donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </span>
+                    </div>
+                    <span style={{ color: '#10b981', fontSize: 'clamp(8px, 0.9vw, 16px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Monatlich</span>
                 </div>
                 {goalReached && overflowM2 > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#fffbeb', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #fde68a', flexShrink: 0 }}>

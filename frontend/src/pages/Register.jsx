@@ -151,6 +151,14 @@ const Register = () => {
             })
             .subscribe();
 
+        // Polling fallback every 3s
+        const settingsPoll = setInterval(() => {
+            supabase.rpc('get_public_settings').then(({ data }) => {
+                const s = Array.isArray(data) ? data[0] : data;
+                if (s?.register_stop_mode) setRegisterStopMode(s.register_stop_mode);
+            });
+        }, 3000);
+
         const boostChannel = supabase.channel('boost-request')
             .on('broadcast', { event: 'boost' }, ({ payload }) => {
                 const registered = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
@@ -165,6 +173,7 @@ const Register = () => {
         return () => {
             boostChannel.unsubscribe();
             settingsChannel.unsubscribe();
+            clearInterval(settingsPoll);
         };
     }, []);
 
