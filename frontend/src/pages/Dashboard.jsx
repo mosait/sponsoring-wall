@@ -387,12 +387,15 @@ const Dashboard = () => {
                                     {dt.boostHowMany}
                                 </label>
                                 <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                                    {[1, 2, 5, 10].map(val => (
-                                        <button key={val} onClick={() => handleBoostSubmit(val)} disabled={boostLoading}
-                                            style={{ flex: 1, padding: '14px 0', borderRadius: '12px', border: '2px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', fontSize: '17px', fontWeight: 900, cursor: 'pointer', opacity: boostLoading ? 0.5 : 1 }}>
-                                            +{val}
-                                        </button>
-                                    ))}
+                                    {[1, 2, 5, 10].map(val => {
+                                        const selected = boostAmount === String(val);
+                                        return (
+                                            <button key={val} onClick={() => setBoostAmount(String(val))} disabled={boostLoading}
+                                                style={{ flex: 1, padding: '14px 0', borderRadius: '12px', border: `2px solid ${selected ? '#16a34a' : '#bbf7d0'}`, background: selected ? '#16a34a' : '#f0fdf4', color: selected ? '#fff' : '#16a34a', fontSize: '17px', fontWeight: 900, cursor: 'pointer', opacity: boostLoading ? 0.5 : 1, transition: 'all 0.15s' }}>
+                                                +{val}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <input type="number" min="1" placeholder={dt.boostCustom} value={boostAmount}

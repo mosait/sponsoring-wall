@@ -335,8 +335,12 @@ const Register = () => {
                                 </label>
                                 <div className="flex flex-wrap gap-2 mb-4">
                                     {[1, 2, 5, 10].map(val => (
-                                        <button key={val} onClick={() => handleBoostSubmit(val)} disabled={boostLoading}
-                                            className="flex-1 min-w-[60px] py-3.5 rounded-xl border-2 border-green-200 bg-green-50 text-green-600 text-lg font-black hover:bg-green-100 hover:border-green-300 transition-all disabled:opacity-50">
+                                        <button key={val} onClick={() => setBoostAmount(String(val))} disabled={boostLoading}
+                                            className={`flex-1 min-w-[60px] py-3.5 rounded-xl border-2 text-lg font-black transition-all disabled:opacity-50 ${
+                                                boostAmount === String(val)
+                                                    ? 'border-green-600 bg-green-600 text-white'
+                                                    : 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 hover:border-green-300'
+                                            }`}>
                                             +{val}
                                         </button>
                                     ))}
