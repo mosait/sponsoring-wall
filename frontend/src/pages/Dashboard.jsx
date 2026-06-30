@@ -460,10 +460,10 @@ const Dashboard = () => {
             {/* Live Chat */}
             <div style={{
                 position: 'fixed',
-                bottom: 'clamp(40px, 3.1vw, 60px)',
-                left: 'clamp(12px, 3.1vw, 60px)',
+                bottom: windowWidth < 768 ? '10px' : 'clamp(40px, 3.1vw, 60px)',
+                left: windowWidth < 768 ? '6px' : 'clamp(12px, 3.1vw, 60px)',
                 zIndex: 100,
-                width: 'clamp(240px, 42.7vw, 820px)',
+                width: windowWidth < 768 ? '48vw' : 'clamp(240px, 42.7vw, 820px)',
                 pointerEvents: 'none',
                 display: 'flex',
                 flexDirection: 'column-reverse',
@@ -634,8 +634,8 @@ const Dashboard = () => {
                         transition={{ type: 'spring', damping: 20, stiffness: 200 }}
                         style={{
                             position: 'fixed',
-                            bottom: 'clamp(18px, 2vw, 38px)',
-                            right: 'clamp(16px, 2.5vw, 48px)',
+                            bottom: windowWidth < 768 ? '10px' : 'clamp(18px, 2vw, 38px)',
+                            right: windowWidth < 768 ? '6px' : 'clamp(16px, 2.5vw, 48px)',
                             zIndex: 95,
                             display: 'flex',
                             flexDirection: 'column',
