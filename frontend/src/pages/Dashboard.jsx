@@ -659,7 +659,7 @@ const Dashboard = () => {
                             viewBox="0 0 256 256"
                         />
                         <span style={{
-                            fontSize: S(11),
+                            fontSize: S(Math.max(8, Math.round(qrSize * 0.07))),
                             fontWeight: 900,
                             textTransform: 'uppercase',
                             letterSpacing: '0.15em',
