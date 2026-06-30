@@ -328,7 +328,8 @@ const Dashboard = () => {
             });
         setBoostLoading(false);
         if (rpcErr || !success) {
-            setBoostError('Fehler beim Speichern. Bitte versuche es erneut.');
+            console.error('[boost] iban:', boostModal.iban, '| rpcErr:', rpcErr, '| success:', success);
+            setBoostError(rpcErr ? `Fehler: ${rpcErr.message}` : 'Sponsor nicht gefunden. Stimmt die IBAN im Profil?');
             return;
         }
         localStorage.setItem('sponsoring_registered', JSON.stringify({
