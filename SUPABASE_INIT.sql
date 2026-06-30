@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS public.project_settings (
     price_per_unit NUMERIC DEFAULT 15,
     dashboard_locked BOOLEAN DEFAULT FALSE,
     show_register_qr BOOLEAN DEFAULT FALSE,
+    qr_size INTEGER DEFAULT 200,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -155,11 +156,11 @@ GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(TEXT, INT) TO anon;
 
 DROP FUNCTION IF EXISTS public.get_public_settings();
 CREATE OR REPLACE FUNCTION public.get_public_settings()
-RETURNS TABLE(goal_sq_meters NUMERIC, price_per_unit NUMERIC, dashboard_locked BOOLEAN, register_stop_mode TEXT, show_register_qr BOOLEAN)
+RETURNS TABLE(goal_sq_meters NUMERIC, price_per_unit NUMERIC, dashboard_locked BOOLEAN, register_stop_mode TEXT, show_register_qr BOOLEAN, qr_size INTEGER)
 LANGUAGE sql SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT goal_sq_meters, price_per_unit, dashboard_locked, register_stop_mode, show_register_qr FROM public.project_settings LIMIT 1;
+  SELECT goal_sq_meters, price_per_unit, dashboard_locked, register_stop_mode, show_register_qr, qr_size FROM public.project_settings LIMIT 1;
 $$;
 GRANT EXECUTE ON FUNCTION public.get_public_settings() TO anon;
 

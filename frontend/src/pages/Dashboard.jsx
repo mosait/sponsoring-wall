@@ -61,6 +61,7 @@ const Dashboard = () => {
     const [boostLoading, setBoostLoading] = useState(false);
     const [boostSuccess, setBoostSuccess] = useState(false);
     const [showRegisterQr, setShowRegisterQr] = useState(false);
+    const [qrSize, setQrSize] = useState(200);
     const lastProgressRef = useRef(0);
     const carpetScrollRef = useRef(null);
     const headerRef = useRef(null);
@@ -229,6 +230,7 @@ const Dashboard = () => {
             if (s?.price_per_unit) setPricePerUnit(s.price_per_unit);
             if (s) setDashboardLocked(s.dashboard_locked || false);
             if (s) setShowRegisterQr(s.show_register_qr || false);
+            if (s?.qr_size) setQrSize(s.qr_size);
         });
 
         // Realtime-Listener für dashboard_locked
@@ -237,6 +239,7 @@ const Dashboard = () => {
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'project_settings' }, ({ new: newData }) => {
                 if (newData) setDashboardLocked(newData.dashboard_locked || false);
                 if (newData) setShowRegisterQr(newData.show_register_qr || false);
+                if (newData?.qr_size) setQrSize(newData.qr_size);
             })
             .subscribe();
 
@@ -246,6 +249,7 @@ const Dashboard = () => {
                 const s = Array.isArray(data) ? data[0] : data;
                 if (s) setDashboardLocked(s.dashboard_locked || false);
                 if (s) setShowRegisterQr(s.show_register_qr || false);
+                if (s?.qr_size) setQrSize(s.qr_size);
             });
         }, 3000);
 
@@ -636,12 +640,12 @@ const Dashboard = () => {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: 'clamp(6px, 0.6vw, 12px)',
+                            gap: S(8),
                             background: 'rgba(255,255,255,0.95)',
                             backdropFilter: 'blur(12px)',
                             WebkitBackdropFilter: 'blur(12px)',
-                            borderRadius: 'clamp(12px, 1.25vw, 24px)',
-                            padding: 'clamp(10px, 1.04vw, 20px)',
+                            borderRadius: S(16),
+                            padding: S(14),
                             boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
                             border: '2px solid rgba(16,185,129,0.25)',
                             textDecoration: 'none',
@@ -650,12 +654,12 @@ const Dashboard = () => {
                     >
                         <QRCode
                             value={window.location.origin + '/register'}
-                            size={Math.round(Math.min(160, Math.max(80, window.innerWidth * 0.09)))}
-                            style={{ height: 'auto', maxWidth: '100%' }}
+                            size={S(qrSize)}
+                            style={{ display: 'block' }}
                             viewBox="0 0 256 256"
                         />
                         <span style={{
-                            fontSize: 'clamp(9px, 0.83vw, 16px)',
+                            fontSize: S(11),
                             fontWeight: 900,
                             textTransform: 'uppercase',
                             letterSpacing: '0.15em',
