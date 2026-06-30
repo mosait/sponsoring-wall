@@ -126,7 +126,7 @@ AS $$
 $$;
 GRANT EXECUTE ON FUNCTION public.get_sponsor_for_registration(TEXT) TO anon;
 
-CREATE OR REPLACE FUNCTION public.boost_update_sponsor(p_iban TEXT, p_add_sqm INT)
+CREATE OR REPLACE FUNCTION public.boost_update_sponsor(p_add_sqm INT, p_iban TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public
@@ -152,7 +152,7 @@ BEGIN
   RETURN TRUE;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(TEXT, INT) TO anon;
+GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(INT, TEXT) TO anon;
 
 DROP FUNCTION IF EXISTS public.get_public_settings();
 CREATE OR REPLACE FUNCTION public.get_public_settings()
