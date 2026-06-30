@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Euro, Heart, Target, Sparkles, X } from 'lucide-react';
 import { supabase, subscribeToSponsors } from '../lib/supabaseClient';
 import SajadahElement from '../components/SajadahElement';
+import QRCode from 'react-qr-code';
 
 const DASH_T = {
     de: {
@@ -59,6 +60,7 @@ const Dashboard = () => {
     const [boostAmount, setBoostAmount] = useState('');
     const [boostLoading, setBoostLoading] = useState(false);
     const [boostSuccess, setBoostSuccess] = useState(false);
+    const [showRegisterQr, setShowRegisterQr] = useState(false);
     const lastProgressRef = useRef(0);
     const carpetScrollRef = useRef(null);
     const headerRef = useRef(null);
@@ -226,6 +228,7 @@ const Dashboard = () => {
             const s = Array.isArray(data) ? data[0] : data;
             if (s?.price_per_unit) setPricePerUnit(s.price_per_unit);
             if (s) setDashboardLocked(s.dashboard_locked || false);
+            if (s) setShowRegisterQr(s.show_register_qr || false);
         });
 
         // Realtime-Listener für dashboard_locked
@@ -233,6 +236,7 @@ const Dashboard = () => {
             .channel('project_settings_changes')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'project_settings' }, ({ new: newData }) => {
                 if (newData) setDashboardLocked(newData.dashboard_locked || false);
+                if (newData) setShowRegisterQr(newData.show_register_qr || false);
             })
             .subscribe();
 
@@ -241,6 +245,7 @@ const Dashboard = () => {
             supabase.rpc('get_public_settings').then(({ data }) => {
                 const s = Array.isArray(data) ? data[0] : data;
                 if (s) setDashboardLocked(s.dashboard_locked || false);
+                if (s) setShowRegisterQr(s.show_register_qr || false);
             });
         }, 3000);
 
@@ -613,6 +618,54 @@ const Dashboard = () => {
                         style={{ height: '100%', background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
                 )}
             </div>
+
+            {/* Register QR Code */}
+            <AnimatePresence>
+                {showRegisterQr && (
+                    <motion.a
+                        href="/register"
+                        initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                        transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+                        style={{
+                            position: 'fixed',
+                            bottom: 'clamp(18px, 2vw, 38px)',
+                            right: 'clamp(16px, 2.5vw, 48px)',
+                            zIndex: 95,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 'clamp(6px, 0.6vw, 12px)',
+                            background: 'rgba(255,255,255,0.95)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderRadius: 'clamp(12px, 1.25vw, 24px)',
+                            padding: 'clamp(10px, 1.04vw, 20px)',
+                            boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
+                            border: '2px solid rgba(16,185,129,0.25)',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <QRCode
+                            value={window.location.origin + '/register'}
+                            size={Math.round(Math.min(160, Math.max(80, window.innerWidth * 0.09)))}
+                            style={{ height: 'auto', maxWidth: '100%' }}
+                            viewBox="0 0 256 256"
+                        />
+                        <span style={{
+                            fontSize: 'clamp(9px, 0.83vw, 16px)',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.15em',
+                            color: '#059669',
+                        }}>
+                            {lang === 'ar' ? 'امسح للتسجيل' : 'Jetzt Registrieren'}
+                        </span>
+                    </motion.a>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

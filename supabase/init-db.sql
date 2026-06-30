@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.project_settings (
     goal_sq_meters NUMERIC DEFAULT 2480,
     price_per_unit NUMERIC DEFAULT 15,
     dashboard_locked BOOLEAN DEFAULT FALSE,
+    show_register_qr BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 

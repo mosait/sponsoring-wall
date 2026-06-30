@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, CreditCard, ChevronRight, CheckCircle2, Building2, X } from 'lucide-react';
+import { User, Mail, Phone, CreditCard, ChevronRight, CheckCircle2, Building2, X, LayoutDashboard } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { isValidIBAN, electronicFormatIBAN } from 'ibantools';
 
@@ -34,6 +35,7 @@ const REG_T = {
         successHeading: 'Herzlichen Dank!',
         successText: 'Ihre Spende wurde erfolgreich registriert. Sie finden Ihren Namen in Kürze auf der Spenderwand.',
         nextBtn: 'Nächste Registrierung',
+        dashboardBtn: 'Zur Spenderwand',
         errorTitle: 'Registrierung nicht möglich',
         validNameErr: 'Bitte einen gültigen Namen eingeben.',
         validIbanErr: 'Bitte eine valide IBAN eingeben (z.B. DE89370400440532013000)',
@@ -83,6 +85,7 @@ const REG_T = {
         successHeading: 'شكراً جزيلاً!',
         successText: 'تم تسجيل تبرعك بنجاح. سيظهر اسمك قريباً على جدار المتبرعين.',
         nextBtn: 'التسجيل التالي',
+        dashboardBtn: 'إلى جدار المتبرعين',
         errorTitle: 'التسجيل غير ممكن',
         validNameErr: 'يرجى إدخال اسم صحيح.',
         validIbanErr: 'يرجى إدخال IBAN صحيح (مثال: DE89370400440532013000)',
@@ -106,6 +109,7 @@ const REG_T = {
 };
 
 const Register = () => {
+    const navigate = useNavigate();
     const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'de');
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
@@ -355,9 +359,16 @@ const Register = () => {
                             setErrorMsg('');
                             setSubmitted(false);
                         }}
-                        className="w-full py-4 bg-[#1a6b3c] text-white rounded-xl font-bold uppercase tracking-widest hover:bg-[#155430] transition-all"
+                        className="w-full py-4 bg-[#1a6b3c] text-white rounded-xl font-bold uppercase tracking-widest hover:bg-[#155430] transition-all mb-3"
                     >
                         {t.nextBtn}
+                    </button>
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="w-full py-4 bg-white text-[#1a6b3c] rounded-xl font-bold uppercase tracking-widest border-2 border-[#1a6b3c] hover:bg-[#f0fdf4] transition-all flex items-center justify-center gap-2"
+                    >
+                        <LayoutDashboard className="w-5 h-5" />
+                        {t.dashboardBtn}
                     </button>
                 </motion.div>
             </div>
@@ -405,11 +416,20 @@ const Register = () => {
                             <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold tracking-[0.2em] uppercase border border-white/10">
                                 {t.badge}
                             </div>
-                            {/* Language Toggle */}
-                            <button onClick={toggleLang}
-                                className="shrink-0 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all">
-                                {t.langToggle}
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                {/* Dashboard link */}
+                                <button onClick={() => navigate('/dashboard')}
+                                    title={t.dashboardBtn}
+                                    className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all flex items-center gap-1.5">
+                                    <LayoutDashboard className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">{t.dashboardBtn}</span>
+                                </button>
+                                {/* Language Toggle */}
+                                <button onClick={toggleLang}
+                                    className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all">
+                                    {t.langToggle}
+                                </button>
+                            </div>
                         </div>
                         <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black mb-6 leading-[1.1] uppercase">{t.heading}</h1>
                         <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8">
