@@ -420,9 +420,8 @@ const Register = () => {
                                 {/* Dashboard link */}
                                 <button onClick={() => navigate('/dashboard')}
                                     title={t.dashboardBtn}
-                                    className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all flex items-center gap-1.5">
-                                    <LayoutDashboard className="w-3.5 h-3.5" />
-                                    <span className="hidden sm:inline">{t.dashboardBtn}</span>
+                                    className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all flex items-center justify-center shrink-0">
+                                    <LayoutDashboard className="w-4 h-4" />
                                 </button>
                                 {/* Language Toggle */}
                                 <button onClick={toggleLang}

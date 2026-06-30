@@ -153,6 +153,7 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION public.boost_update_sponsor(TEXT, INT) TO anon;
 
+DROP FUNCTION IF EXISTS public.get_public_settings();
 CREATE OR REPLACE FUNCTION public.get_public_settings()
 RETURNS TABLE(goal_sq_meters NUMERIC, price_per_unit NUMERIC, dashboard_locked BOOLEAN, register_stop_mode TEXT, show_register_qr BOOLEAN)
 LANGUAGE sql SECURITY DEFINER
