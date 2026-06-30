@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Phone, CreditCard, ChevronRight, CheckCircle2, Building2, X, LayoutDashboard } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { sendConfirmationEmail } from '../lib/emailService';
 import { isValidIBAN, electronicFormatIBAN } from 'ibantools';
 
 const REG_T = {
@@ -237,6 +238,12 @@ const Register = () => {
                 email: cleanEmail,
                 iban: cleanIban
             }));
+            sendConfirmationEmail({
+                name: cleanName,
+                email: cleanEmail,
+                sqMeters: addedSqMeters,
+                monthlyAmount: addedAmount,
+            });
         } else {
             setErrorMsg(t.saveErr(error.message));
         }

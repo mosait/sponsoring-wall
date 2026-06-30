@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bestätigung Ihrer Spende</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
+
+  <div style="max-width:620px;margin:40px auto 40px auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.12);">
+
+    <!-- ═══════════════════ HEADER ═══════════════════ -->
+    <div style="background-color:#0c151a;padding:36px 48px;text-align:center;">
+      <img src="{{logo_url}}" alt="IZS Logo" height="80"
+           style="display:block;margin:0 auto;max-width:200px;height:auto;" />
+    </div>
+
+    <!-- ═══════════════════ BODY ═══════════════════ -->
+    <div style="padding:44px 48px;">
+
+      <!-- Greeting -->
+      <p style="font-size:19px;font-weight:700;color:#0c151a;margin:0 0 28px 0;line-height:1.5;">
+        Assalamu Alaikum wa rahmatullahi wa barakatuh,
+      </p>
+
+      <!-- ── GERMAN ── -->
+      <p style="font-size:15px;color:#333333;line-height:1.7;margin:0 0 16px 0;">
+        herzlichen Dank, <strong style="color:#0c151a;">{{to_name}}</strong>,
+        für Ihre Registrierung bei der <strong>IZS Gebetsplatz-Aktion 2026</strong>.
+        Möge Allah Ihre Großzügigkeit annehmen und Ihnen und Ihrer Familie reichlich Segen schenken.
+      </p>
+
+      <!-- Amount box -->
+      <div style="background:#f7faf8;border-left:4px solid #1d6a3c;border-radius:8px;padding:18px 22px;margin:24px 0;">
+        <p style="margin:0 0 6px 0;font-size:14px;color:#555555;">Ihre Registrierung:</p>
+        <p style="margin:0;font-size:22px;font-weight:700;color:#1d6a3c;">
+          {{sq_meters}} Gebetsplatz/Gebetsplätze
+        </p>
+        <p style="margin:4px 0 0 0;font-size:15px;color:#333333;">
+          <strong>{{monthly_amount}} €</strong> monatlich per SEPA-Lastschrift
+        </p>
+      </div>
+
+      <p style="font-size:15px;color:#333333;line-height:1.7;margin:0 0 16px 0;">
+        Ihr SEPA-Lastschriftmandat wurde erfolgreich registriert.
+        Die monatliche Abbuchung erfolgt automatisch.
+        Ihr Name erscheint in Kürze auf unserer <strong>Spenderwand</strong>.
+      </p>
+
+      <p style="font-size:15px;color:#333333;line-height:1.7;margin:0;">
+        Wenn Sie Fragen haben, erreichen Sie uns jederzeit per E-Mail.
+        Wir sind dankbar für Ihren Beitrag, der hilft, die Moschee offen und lebendig zu halten.
+      </p>
+
+      <!-- ── DIVIDER ── -->
+      <div style="border-top:1px solid #e8ede8;margin:36px 0;"></div>
+
+      <!-- ── ARABIC ── -->
+      <div style="direction:rtl;text-align:right;">
+        <p style="font-size:15px;color:#333333;line-height:1.9;margin:0 0 16px 0;">
+          شكراً جزيلاً، <strong style="color:#0c151a;">{{to_name}}</strong>،
+          على تسجيلك في <strong>حملة مصلى IZS لعام 2026</strong>.
+          تقبّل الله منك وبارك فيك وفي أهلك.
+        </p>
+
+        <!-- Arabic amount box -->
+        <div style="background:#f7faf8;border-right:4px solid #1d6a3c;border-left:none;border-radius:8px;padding:18px 22px;margin:24px 0;">
+          <p style="margin:0 0 6px 0;font-size:14px;color:#555555;">تفاصيل تسجيلك:</p>
+          <p style="margin:0;font-size:22px;font-weight:700;color:#1d6a3c;">
+            {{sq_meters}} مصلى
+          </p>
+          <p style="margin:4px 0 0 0;font-size:15px;color:#333333;">
+            <strong>{{monthly_amount}} €</strong> شهرياً عبر الخصم المباشر SEPA
+          </p>
+        </div>
+
+        <p style="font-size:15px;color:#333333;line-height:1.9;margin:0 0 16px 0;">
+          تم تسجيل تفويض الخصم المباشر بنجاح وسيتم خصم المبلغ تلقائياً كل شهر.
+          سيظهر اسمك قريباً على <strong>جدار المتبرعين</strong>.
+        </p>
+
+        <p style="font-size:15px;color:#333333;line-height:1.9;margin:0;">
+          إذا كان لديك أي استفسار، لا تتردد في التواصل معنا.
+          نشكرك على مساهمتك التي تُسهم في إبقاء المسجد مفتوحاً وحياً.
+        </p>
+      </div>
+
+      <!-- ── CLOSING ── -->
+      <div style="margin-top:40px;padding-top:24px;border-top:1px solid #e8ede8;">
+        <p style="font-size:15px;color:#555555;line-height:1.7;margin:0;">
+          Mit freundlichen Grüßen / مع أطيب التحيات<br/><br/>
+          <strong style="color:#0c151a;font-size:16px;">Dein Team des</strong><br/>
+          <strong style="color:#1d6a3c;font-size:17px;">Islamisches Zentrum Stuttgart e.V.</strong>
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════ FOOTER ═══════════════════ -->
+    <div style="background-color:#0c151a;padding:22px 48px;text-align:center;">
+      <p style="color:#8a9ba8;font-size:12px;margin:0;line-height:1.6;">
+        IZS – Islamisches Zentrum Stuttgart e.V. &nbsp;|&nbsp; Gebetsplatz-Aktion 2026<br/>
+        Diese E-Mail wurde automatisch generiert – bitte nicht antworten.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>

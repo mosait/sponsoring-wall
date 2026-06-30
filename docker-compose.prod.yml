@@ -143,6 +143,9 @@ services:
       args:
         - VITE_SUPABASE_URL=${SCHEME:-http}://${SERVER_HOST}:8000
         - VITE_SUPABASE_ANON_KEY=${ANON_KEY}
+        - VITE_EMAILJS_SERVICE_ID=${VITE_EMAILJS_SERVICE_ID}
+        - VITE_EMAILJS_TEMPLATE_ID=${VITE_EMAILJS_TEMPLATE_ID}
+        - VITE_EMAILJS_PUBLIC_KEY=${VITE_EMAILJS_PUBLIC_KEY}
     environment:
       # Laufzeit-Vars — nie im Image-Layer, nur im laufenden Container
       - ADMIN_HTTP_USER=${ADMIN_HTTP_USER:-admin}
