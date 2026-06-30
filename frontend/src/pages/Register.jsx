@@ -121,17 +121,20 @@ const Register = () => {
     const [boostAmount, setBoostAmount] = useState('');
     const [boostLoading, setBoostLoading] = useState(false);
     const [boostSuccess, setBoostSuccess] = useState(false);
-    const [formData, setFormData] = useState({
-        full_name: '',
-        email: '',
-        phone: '',
-        iban: '',
-        sq_meters: 1,
-        mandate_accepted: false,
-        is_anonymous: false,
-        notice_understood: false,
-        inputMode: 'sqm',
-        monthlyEuro: ''
+    const [formData, setFormData] = useState(() => {
+        const saved = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
+        return {
+            full_name: saved?.name || '',
+            email: saved?.email || '',
+            phone: '',
+            iban: saved?.iban || '',
+            sq_meters: 1,
+            mandate_accepted: false,
+            is_anonymous: false,
+            notice_understood: false,
+            inputMode: 'sqm',
+            monthlyEuro: ''
+        };
     });
 
     const t = REG_T[lang];
