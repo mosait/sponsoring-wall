@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Euro, Heart, Target, Sparkles, X } from 'lucide-react';
 import { supabase, subscribeToSponsors } from '../lib/supabaseClient';
+import { sendConfirmationEmail } from '../lib/emailService';
 import SajadahElement from '../components/SajadahElement';
 import QRCode from 'react-qr-code';
 
@@ -60,6 +61,7 @@ const Dashboard = () => {
     const [boostAmount, setBoostAmount] = useState('');
     const [boostLoading, setBoostLoading] = useState(false);
     const [boostSuccess, setBoostSuccess] = useState(false);
+    const [boostError, setBoostError] = useState('');
     const [showRegisterQr, setShowRegisterQr] = useState(false);
     const [qrSize, setQrSize] = useState(200);
     const lastProgressRef = useRef(0);
@@ -293,6 +295,7 @@ const Dashboard = () => {
                 if (registered) {
                     setBoostModal({ message: payload.message, ...registered });
                     setBoostAmount('');
+                    setBoostError('');
                     setBoostSuccess(false);
                 }
             })
@@ -316,20 +319,29 @@ const Dashboard = () => {
         if (!boostModal || !boostModal.iban) return;
         const sqmToAdd = addSqm || parseInt(boostAmount) || 0;
         if (sqmToAdd <= 0) return;
+        setBoostError('');
         setBoostLoading(true);
         const { data: success, error: rpcErr } = await supabase
             .rpc('boost_update_sponsor', {
                 p_iban: boostModal.iban,
                 p_add_sqm: sqmToAdd,
-                p_price: pricePerUnit
             });
         setBoostLoading(false);
-        if (rpcErr || !success) return;
+        if (rpcErr || !success) {
+            setBoostError('Fehler beim Speichern. Bitte versuche es erneut.');
+            return;
+        }
         localStorage.setItem('sponsoring_registered', JSON.stringify({
             name: boostModal.name,
             email: boostModal.email,
             iban: boostModal.iban
         }));
+        sendConfirmationEmail({
+            name: boostModal.name,
+            email: boostModal.email,
+            sqMeters: sqmToAdd,
+            monthlyAmount: sqmToAdd * pricePerUnit,
+        });
         setBoostSuccess(true);
         setTimeout(() => setBoostModal(null), 2500);
     };
@@ -390,6 +402,9 @@ const Dashboard = () => {
                                         {boostLoading ? dt.boostSaving : dt.boostIncrease}
                                     </button>
                                 </div>
+                                {boostError && (
+                                    <p style={{ marginTop: '10px', color: '#dc2626', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>{boostError}</p>
+                                )}
                             </>
                         )}
                     </motion.div>

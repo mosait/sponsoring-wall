@@ -121,6 +121,7 @@ const Register = () => {
     const [boostAmount, setBoostAmount] = useState('');
     const [boostLoading, setBoostLoading] = useState(false);
     const [boostSuccess, setBoostSuccess] = useState(false);
+    const [boostError, setBoostError] = useState('');
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
         return {
@@ -173,6 +174,7 @@ const Register = () => {
                 if (registered) {
                     setBoostModal({ message: payload.message, ...registered });
                     setBoostAmount('');
+                    setBoostError('');
                     setBoostSuccess(false);
                 }
             })
@@ -257,6 +259,7 @@ const Register = () => {
         if (!boostModal || !boostModal.iban) return;
         const sqmToAdd = addSqm || parseInt(boostAmount) || 0;
         if (sqmToAdd <= 0) return;
+        setBoostError('');
         setBoostLoading(true);
 
         const { data: success, error: rpcErr } = await supabase
@@ -267,13 +270,22 @@ const Register = () => {
 
         setBoostLoading(false);
 
-        if (rpcErr || !success) return;
+        if (rpcErr || !success) {
+            setBoostError('Fehler beim Speichern. Bitte versuche es erneut.');
+            return;
+        }
 
         localStorage.setItem('sponsoring_registered', JSON.stringify({
             name: boostModal.name,
             email: boostModal.email,
             iban: boostModal.iban
         }));
+        sendConfirmationEmail({
+            name: boostModal.name,
+            email: boostModal.email,
+            sqMeters: sqmToAdd,
+            monthlyAmount: sqmToAdd * pricePerUnit,
+        });
         setBoostSuccess(true);
         setTimeout(() => setBoostModal(null), 2500);
     };
@@ -337,6 +349,9 @@ const Register = () => {
                                         {boostLoading ? t.boostSaving : t.boostIncrease}
                                     </button>
                                 </div>
+                                {boostError && (
+                                    <p className="mt-3 text-red-600 text-sm font-semibold text-center">{boostError}</p>
+                                )}
                             </>
                         )}
                     </motion.div>
