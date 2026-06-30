@@ -361,10 +361,19 @@ const Register = () => {
                     <p className="text-gray-600 mb-8 leading-relaxed">{t.successText}</p>
                     <button
                         onClick={() => {
+                            const saved = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
                             setFormData({
-                                full_name: '', email: '', phone: '', iban: '',
-                                sq_meters: 1, mandate_accepted: false,
-                                is_anonymous: false, notice_understood: false, inputMode: 'sqm', monthlyEuro: '', customSqm: ''
+                                full_name: saved?.name || '',
+                                email: saved?.email || '',
+                                phone: '',
+                                iban: saved?.iban || '',
+                                sq_meters: 1,
+                                mandate_accepted: false,
+                                is_anonymous: false,
+                                notice_understood: false,
+                                inputMode: 'sqm',
+                                monthlyEuro: '',
+                                customSqm: ''
                             });
                             setErrorMsg('');
                             setSubmitted(false);

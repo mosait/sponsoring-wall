@@ -14,7 +14,7 @@ export async function sendConfirmationEmail({ name, email, sqMeters, monthlyAmou
         return;
     }
 
-    const logoUrl = `${window.location.origin}/logo.png`;
+    const logoUrl = `${window.location.origin}/logo_white_bg.png`;
 
     try {
         await emailjs.send(
