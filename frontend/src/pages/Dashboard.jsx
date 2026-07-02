@@ -25,6 +25,7 @@ const DASH_T = {
         boostIncrease: 'Erhöhen',
         boostSuccessTitle: 'Jazak Allahu Khairan!',
         boostSuccessText: 'Dein Beitrag wurde erfolgreich erhöht.',
+        monatlich: 'Monatlich',
     },
     ar: {
         orgName: 'المركز الإسلامي شتوتغارت',
@@ -43,6 +44,7 @@ const DASH_T = {
         boostIncrease: 'رفع',
         boostSuccessTitle: 'جزاك الله خيراً!',
         boostSuccessText: 'تم رفع مساهمتك بنجاح.',
+        monatlich: 'شهرياً',
     },
 };
 
@@ -583,7 +585,7 @@ const Dashboard = () => {
                             {donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                     </div>
-                    <span style={{ color: '#10b981', fontSize: 'clamp(8px, 0.9vw, 16px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Monatlich</span>
+                    <span style={{ color: '#10b981', fontSize: 'clamp(8px, 0.9vw, 16px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.monatlich}</span>
                 </div>
                 {goalReached && overflowM2 > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#fffbeb', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #fde68a', flexShrink: 0 }}>

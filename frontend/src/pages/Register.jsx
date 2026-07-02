@@ -10,7 +10,10 @@ const REG_T = {
     de: {
         badge: 'Gebetsplatz Spendenaktion',
         heading: 'Zahle einen Gebetsplatz für ein Jahr',
-        description: 'Sichern Sie sich einen oder mehrere Gebetsplätze in der Moschee und hinterlassen Sie ein bleibendes Erbe.',
+        description: 'Halte einen oder mehrere Gebetsplätze in der Moschee am Leben und hinterlasse ein bleibendes Erbe – eine Sadaqah Jariyah, von der du noch lange nach deinem Tod profitierst.',
+        haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
+        haditTranslation: '„Wer eine Moschee um Allahs willen baut, sei es nur ein Spatzennest oder noch kleiner, dem wird Allah ein Haus im Paradies bauen."',
+        haditSource: 'Sunan Ibn Majah 738',
         priceUnit: 'pro Gebetsplatz / Monat',
         projectLabel: 'Projekt',
         projectName: 'IZS Gebetsplatz 2026',
@@ -31,7 +34,7 @@ const REG_T = {
         ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
         anonymousLabel: 'Anonym spenden (Name wird nicht auf der Spenderwand angezeigt)',
         noticeLabel: 'Ich verstehe, dass diese Spende keinen festen Gebetsplatz reserviert, sondern dazu dient, die Moschee am Laufen zu halten und offen zu halten.',
-        mandateLabel: 'Ich ermächtige IZS – Islamisches Zentrum Stuttgart e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom IZS – Islamisches Zentrum Stuttgart e.V. auf mein Konto gezogenen Lastschriften einzulösen.',
+        mandateLabel: 'Ich ermächtige Islamisches Zentrum Stuttgart e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom Islamisches Zentrum Stuttgart e.V. auf mein Konto gezogenen Lastschriften einzulösen.',
         submitBtn: (amount) => `Jetzt Spenden ${amount}€/Monat`,
         successHeading: 'Herzlichen Dank!',
         successText: 'Ihre Spende wurde erfolgreich registriert. Sie finden Ihren Namen in Kürze auf der Spenderwand.',
@@ -60,7 +63,10 @@ const REG_T = {
     ar: {
         badge: 'حملة المصلى',
         heading: 'ادفع ثمن مصلى لمدة سنة',
-        description: 'احجز مصلى أو أكثر في المسجد وابقَ أثراً دائماً.',
+        description: 'ساهم في الحفاظ على مصلى أو أكثر في المسجد، وابقَ أثراً خالداً – صدقةً جاريةً تنتفع بها بعد وفاتك.',
+        haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
+        haditTranslation: null,
+        haditSource: 'سنن ابن ماجه ٧٣٨',
         priceUnit: 'لكل مصلى / شهرياً',
         projectLabel: 'المشروع',
         projectName: 'IZS Gebetsplatz 2026',
@@ -81,7 +87,7 @@ const REG_T = {
         ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
         anonymousLabel: 'تبرع بشكل مجهول (لن يُعرض اسمك على جدار المتبرعين)',
         noticeLabel: 'أفهم أن هذا التبرع لا يحجز مصلى محدداً، بل يساعد في الإبقاء على المسجد مفتوحاً وتغطية تكاليفه الجارية.',
-        mandateLabel: 'أفوّض IZS – Islamisches Zentrum Stuttgart e.V. بخصم المدفوعات من حسابي مباشرةً. وفي الوقت ذاته أوجّه مصرفي بصرف هذه المدفوعات.',
+        mandateLabel: 'أفوّض Islamisches Zentrum Stuttgart e.V. بخصم المدفوعات من حسابي مباشرةً. وفي الوقت ذاته أوجّه مصرفي بصرف هذه المدفوعات.',
         submitBtn: (amount) => `تبرع الآن ${amount}€/شهر`,
         successHeading: 'شكراً جزيلاً!',
         successText: 'تم تسجيل تبرعك بنجاح. سيظهر اسمك قريباً على جدار المتبرعين.',
@@ -470,9 +476,23 @@ const Register = () => {
                             </div>
                         </div>
                         <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black mb-6 leading-[1.1] uppercase">{t.heading}</h1>
-                        <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8">
+                        <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-6">
                             {t.description}
                         </p>
+
+                        {/* Hadith */}
+                        <div className="bg-white/10 border border-white/20 rounded-2xl p-5 mb-8">
+                            <p className="text-white text-right leading-loose text-base font-bold" dir="rtl">
+                                ❝ {t.haditArabic} ❞
+                            </p>
+                            {t.haditTranslation && (
+                                <p className="text-white/85 text-sm leading-relaxed mt-3">
+                                    {t.haditTranslation}
+                                </p>
+                            )}
+                            <p className="text-white/50 text-xs mt-2 italic text-right" dir={t.dir}>{t.haditSource}</p>
+                        </div>
+
                         <div className="flex items-center space-x-4 bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div className="text-yellow-300 font-black text-xl sm:text-2xl">{pricePerUnit}€</div>
                             <div className="text-white/70 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
