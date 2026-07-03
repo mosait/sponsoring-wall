@@ -15,7 +15,7 @@ const DASH_T = {
         milestone: 'Meilenstein Erreicht!',
         kauf: 'Kauf',
         langToggle: 'عربي',
-        chatDonated: (amount) => `hat ${amount} Gebetspl. gespendet`,
+        chatDonated: (amount) => `hat ${amount} Gebetsplätze gespendet`,
         chatCash: (cashAmt) => `es wurde €${cashAmt} bar gespendet`,
         boostAdminCall: 'Aufruf vom Admin',
         boostEmail: 'Deine E-Mail',
@@ -532,7 +532,7 @@ const Dashboard = () => {
                                             : <>es wurde <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span> bar gespendet</>
                                         : lang === 'ar'
                                             ? <>{dt.chatDonated(msg.amount)}</>
-                                            : <>hat <span style={{ color: '#059669', fontWeight: 700 }}>{msg.amount} Pl.</span> gespendet</>
+                                            : <>hat <span style={{ color: '#059669', fontWeight: 700 }}>{msg.amount} Gebetsplätze</span> gespendet</>
                                     }
                                 </div>
                             </div>
@@ -543,13 +543,8 @@ const Dashboard = () => {
 
             {/* HEADER */}
             <div ref={headerRef} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'clamp(8px, 3.1vw, 60px)', padding: 'clamp(12px, 2.3vw, 44px) clamp(16px, 4.2vw, 80px)', borderBottom: '3px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.2vw, 24px)', flexShrink: 0 }}>
-                    <img src="/logo.png" alt="IZS Logo" style={{ height: 'clamp(60px, 8vw, 150px)', width: 'auto', display: 'block' }} />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        <span style={{ color: '#059669', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.18em', lineHeight: 1.35 }}>Islamisches</span>
-                        <span style={{ color: '#059669', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.18em', lineHeight: 1.35 }}>Zentrum</span>
-                        <span style={{ color: '#059669', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.18em', lineHeight: 1.35 }}>Stuttgart</span>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <img src="/logo.png" alt="IZS Logo" style={{ height: 'clamp(80px, 10vw, 190px)', width: 'auto', display: 'block' }} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(6px, 0.94vw, 18px)', flexShrink: 0 }}>
                     <Target size={S(44)} style={{ color: '#9ca3af' }} />

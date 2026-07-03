@@ -8,9 +8,13 @@ import { isValidIBAN, electronicFormatIBAN } from 'ibantools';
 
 const REG_T = {
     de: {
-        badge: 'Gebetsplatz Spendenaktion',
-        heading: 'Zahle einen Gebetsplatz für ein Jahr',
-        description: 'Halte einen oder mehrere Gebetsplätze in der Moschee am Leben und hinterlasse ein bleibendes Erbe – eine Sadaqah Jariyah, von der du noch lange nach deinem Tod profitierst.',
+        badge: 'MONATLICHE BETRIEBSKOSTEN-AKTION',
+        heading: 'HILF UNS, DIE MOSCHEE JEDEN MONAT AM LAUFEN ZU HALTEN',
+        description: 'Jeden Monat fallen 7.500 € an, um unsere Moschee zu betreiben: Miete, Nebenkosten, Instandhaltung sowie die Organisation der fünf täglichen Gebete, der Freitagspredigt und unserer Bildungs- und Gemeindeangebote.',
+        descriptionP2: 'Mit deiner monatlichen Spende trägst du direkt dazu bei, dass unsere Moschee dauerhaft offen und nutzbar bleibt – eine Sadaqah Jariyah, von der du noch lange nach deinem Tod profitierst.',
+        whyTitle: 'WARUM 15 € PRO GEBETSPLATZ?',
+        whyP1: 'Um unsere monatlichen Betriebskosten von 7.500 € greifbar zu machen, haben wir sie in 500 „Gebetsplätze“ à 15 € aufgeteilt – als symbolische Einheit, keine feste Platzreservierung.',
+        whyP2: 'So siehst du genau was dein Beitrag bewirkt: Jeder Gebetsplatz den du übernimmst, hilft die Moschee für die gesamte Gemeinde offen und funktionsfähig zu halten.',
         haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
         haditTranslation: '„Wer eine Moschee um Allahs willen baut, sei es nur ein Spatzennest oder noch kleiner, dem wird Allah ein Haus im Paradies bauen."',
         haditSource: 'Sunan Ibn Majah 738',
@@ -23,7 +27,7 @@ const REG_T = {
         emailPlaceholder: 'mail@beispiel.de',
         phoneLabel: 'Telefon',
         phonePlaceholder: '+49 123 45678',
-        howLabel: 'Wie möchten Sie spenden?',
+        howLabel: 'Wie möchtest du spenden?',
         selectUnits: 'Gebetsplätze wählen',
         enterEuro: '€/Monat eingeben',
         customUnits: 'Eigene Anzahl',
@@ -33,7 +37,9 @@ const REG_T = {
         ibanLabel: 'IBAN',
         ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
         anonymousLabel: 'Anonym spenden (Name wird nicht auf der Spenderwand angezeigt)',
-        noticeLabel: 'Ich verstehe, dass diese Spende keinen festen Gebetsplatz reserviert, sondern dazu dient, die Moschee am Laufen zu halten und offen zu halten.',
+        noticeLabel: 'Ich verstehe, dass meine Spende keinen festen, physischen Gebetsplatz reserviert, sondern dazu dient, die monatlichen Betriebskosten der Moschee zu decken.',
+        noticeErr: 'Bitte bestätige, dass du die Bedeutung dieser Spende verstanden hast.',
+        progressLabel: 'Gebetsplätze belegt',
         mandateLabel: 'Ich ermächtige Islamisches Zentrum Stuttgart e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom Islamisches Zentrum Stuttgart e.V. auf mein Konto gezogenen Lastschriften einzulösen.',
         submitBtn: (amount) => `Jetzt Spenden ${amount}€/Monat`,
         successHeading: 'Herzlichen Dank!',
@@ -61,9 +67,13 @@ const REG_T = {
         dir: 'ltr',
     },
     ar: {
-        badge: 'حملة المصلى',
-        heading: 'ادفع ثمن مصلى لمدة سنة',
-        description: 'ساهم في الحفاظ على مصلى أو أكثر في المسجد، وابقَ أثراً خالداً – صدقةً جاريةً تنتفع بها بعد وفاتك.',
+        badge: 'حملة التكاليف التشغيلية الشهرية',
+        heading: 'ساعدنا في إبقاء المسجد يعمل كل شهر',
+        description: 'كل شهر نحتاج إلى 7.500 يورو لتشغيل مسجدنا: الإيجار والمرافق والصيانة وتنظيم الصلوات الخمس وصلاة الجمعة وبرامجنا التعليمية والمجتمعية.',
+        descriptionP2: 'بتبرعك الشهري تساهم مباشرةً في إبقاء مسجدنا مفتوحاً ومتاحاً دائماً – صدقةً جاريةً تنتفع بها بعد وفاتك.',
+        whyTitle: 'لماذا 15 يورو لكل مصلى؟',
+        whyP1: 'لجعل التكاليف التشغيلية الشهرية البالغة 7.500 يورو ملموسةً، قسّمناها إلى 500 “مصلى” بـ 15 يورو لكل منها – كوحدة رمزية، وليست حجزاً فعلياً لمكان.',
+        whyP2: 'هكذا ترى بدقة ما يُحدثه مساهمتك: كل مصلى تتبناه يساعد في إبقاء المسجد مفتوحاً وعاملاً لفائدة الجميع.',
         haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
         haditTranslation: null,
         haditSource: 'سنن ابن ماجه ٧٣٨',
@@ -86,7 +96,9 @@ const REG_T = {
         ibanLabel: 'IBAN',
         ibanPlaceholder: 'DE00 0000 0000 0000 0000 00',
         anonymousLabel: 'تبرع بشكل مجهول (لن يُعرض اسمك على جدار المتبرعين)',
-        noticeLabel: 'أفهم أن هذا التبرع لا يحجز مصلى محدداً، بل يساعد في الإبقاء على المسجد مفتوحاً وتغطية تكاليفه الجارية.',
+        noticeLabel: 'أفهم أن تبرعي لا يحجز مصلى فعلياً ثابتاً، بل يُستخدم لتغطية التكاليف التشغيلية الشهرية للمسجد.',
+        noticeErr: 'يرجى تأكيد أنك فهمت معنى هذا التبرع.',
+        progressLabel: 'مصلى محجوز',
         mandateLabel: 'أفوّض Islamisches Zentrum Stuttgart e.V. بخصم المدفوعات من حسابي مباشرةً. وفي الوقت ذاته أوجّه مصرفي بصرف هذه المدفوعات.',
         submitBtn: (amount) => `تبرع الآن ${amount}€/شهر`,
         successHeading: 'شكراً جزيلاً!',
@@ -128,6 +140,8 @@ const Register = () => {
     const [boostLoading, setBoostLoading] = useState(false);
     const [boostSuccess, setBoostSuccess] = useState(false);
     const [boostError, setBoostError] = useState('');
+    const [totalSqMeters, setTotalSqMeters] = useState(0);
+    const BASE_GOAL = 500;
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
         return {
@@ -157,6 +171,10 @@ const Register = () => {
             const s = Array.isArray(data) ? data[0] : data;
             if (s?.price_per_unit) setPricePerUnit(s.price_per_unit);
             if (s?.register_stop_mode) setRegisterStopMode(s.register_stop_mode);
+        });
+
+        supabase.from('sponsors_public').select('sq_meters').then(({ data }) => {
+            if (data) setTotalSqMeters(data.reduce((sum, r) => sum + Number(r.sq_meters || 0), 0));
         });
 
         const settingsChannel = supabase
@@ -215,6 +233,11 @@ const Register = () => {
 
         if (!validateIBAN(cleanIban)) {
             setErrorMsg(t.validIbanErr);
+            return;
+        }
+
+        if (!formData.notice_understood) {
+            setErrorMsg(t.noticeErr);
             return;
         }
 
@@ -475,10 +498,20 @@ const Register = () => {
                                 </button>
                             </div>
                         </div>
-                        <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black mb-6 leading-[1.1] uppercase">{t.heading}</h1>
-                        <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-6">
+                        <h1 className="text-2xl sm:text-3xl font-black mb-4 leading-[1.15] uppercase">{t.heading}</h1>
+                        <p className="text-white/80 text-sm sm:text-base leading-relaxed mb-3">
                             {t.description}
                         </p>
+                        <p className="text-white/80 text-sm sm:text-base leading-relaxed mb-4">
+                            {t.descriptionP2}
+                        </p>
+
+                        {/* WARUM 15 € */}
+                        <div className="mb-6">
+                            <p className="text-yellow-300 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{t.whyTitle}</p>
+                            <p className="text-white/70 text-sm leading-relaxed mb-2">{t.whyP1}</p>
+                            <p className="text-white/70 text-sm leading-relaxed">{t.whyP2}</p>
+                        </div>
 
                         {/* Hadith */}
                         <div className="bg-white/10 border border-white/20 rounded-2xl p-5 mb-8">
@@ -496,6 +529,23 @@ const Register = () => {
                         <div className="flex items-center space-x-4 bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div className="text-yellow-300 font-black text-xl sm:text-2xl">{pricePerUnit}€</div>
                             <div className="text-white/70 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="mt-4 bg-white/10 border border-white/20 rounded-2xl p-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider">{t.progressLabel}</span>
+                                <span className="text-white font-black text-sm">{Math.min(totalSqMeters, BASE_GOAL)} / {BASE_GOAL}</span>
+                            </div>
+                            <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-yellow-300 to-yellow-400 rounded-full transition-all duration-1000"
+                                    style={{ width: `${Math.min((totalSqMeters / BASE_GOAL) * 100, 100).toFixed(1)}%` }}
+                                />
+                            </div>
+                            <div className="text-right mt-1">
+                                <span className="text-yellow-300 font-black text-xs">{((Math.min(totalSqMeters, BASE_GOAL) / BASE_GOAL) * 100).toFixed(1)}%</span>
+                            </div>
                         </div>
                     </div>
                     <div className="mt-10 pt-10 border-t border-white/10 relative z-10">
