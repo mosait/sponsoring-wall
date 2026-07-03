@@ -30,6 +30,7 @@ const REG_T = {
         howLabel: 'Wie möchtest du spenden?',
         selectUnits: 'Gebetsplätze wählen',
         enterEuro: '€/Monat eingeben',
+        perMonth: '/ Monat',
         customUnits: 'Eigene Anzahl',
         resultLabel: 'Ergibt:',
         resultUnit: (n) => `${n} Gebetspl.`,
@@ -89,6 +90,7 @@ const REG_T = {
         howLabel: 'كيف تريد التبرع؟',
         selectUnits: 'اختر عدد المصليات',
         enterEuro: 'أدخل €/شهر',
+        perMonth: '/ شهر',
         customUnits: 'عدد مخصص',
         resultLabel: 'يساوي:',
         resultUnit: (n) => `${n} مصلى`,
@@ -653,11 +655,11 @@ const Register = () => {
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
-                                        <div className="relative">
+                                        <div className="relative" dir="ltr">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-400">€</span>
                                             <input type="number"
-                                                className="w-full bg-gray-50 border-2 border-transparent focus:border-[#1a6b3c] focus:bg-white rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-xl text-[#0c151a]"
-                                                placeholder="z.B. 30" min="15" step="1"
+                                                className="w-full bg-gray-50 border-2 border-transparent focus:border-[#1a6b3c] focus:bg-white rounded-xl py-4 pl-12 pr-16 outline-none transition-all font-bold text-xl text-[#0c151a]"
+                                                placeholder="30" min="15" step="1"
                                                 value={formData.monthlyEuro}
                                                 onChange={(e) => {
                                                     const euros = parseFloat(e.target.value) || 0;
@@ -665,7 +667,7 @@ const Register = () => {
                                                     setFormData({ ...formData, monthlyEuro: e.target.value, sq_meters: Math.max(sqm, 1) });
                                                 }}
                                             />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 uppercase tracking-wider">/ Monat</span>
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 tracking-wider">{t.perMonth}</span>
                                         </div>
                                         <div className="flex items-center justify-between bg-emerald-50 rounded-xl p-3 px-4 border border-emerald-200/50">
                                             <span className="text-emerald-700 text-xs font-bold">{t.resultLabel}</span>
