@@ -510,14 +510,14 @@ const Register = () => {
                         </p>
 
                         {/* WARUM 15 € */}
-                        <div className="mb-6">
+                        <div className="mb-6 border border-white/25 rounded-xl overflow-hidden">
                             <button
                                 type="button"
                                 onClick={() => setWhyOpen(prev => !prev)}
-                                className="flex items-center justify-between w-full text-left mb-1 group"
+                                className="flex items-center justify-between w-full text-left px-4 py-3 cursor-pointer hover:bg-white/10 active:bg-white/15 transition-colors"
                             >
                                 <p className="text-yellow-300 text-[10px] font-black uppercase tracking-[0.2em]">{t.whyTitle}</p>
-                                <ChevronRight className={`w-3.5 h-3.5 text-yellow-300 shrink-0 transition-transform duration-200 ${whyOpen ? 'rotate-90' : ''}`} />
+                                <ChevronRight className={`w-5 h-5 text-yellow-300 shrink-0 transition-transform duration-200 ${whyOpen ? 'rotate-90' : ''}`} />
                             </button>
                             <AnimatePresence initial={false}>
                                 {whyOpen && (
@@ -529,8 +529,10 @@ const Register = () => {
                                         transition={{ duration: 0.2 }}
                                         style={{ overflow: 'hidden' }}
                                     >
-                                        <p className="text-white/70 text-sm leading-relaxed mb-2 pt-2">{t.whyP1}</p>
-                                        <p className="text-white/70 text-sm leading-relaxed">{t.whyP2}</p>
+                                        <div className="px-4 pb-4 pt-1 border-t border-white/15">
+                                            <p className="text-white/70 text-sm leading-relaxed mb-2">{t.whyP1}</p>
+                                            <p className="text-white/70 text-sm leading-relaxed">{t.whyP2}</p>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
