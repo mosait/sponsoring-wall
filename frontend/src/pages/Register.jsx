@@ -143,6 +143,7 @@ const Register = () => {
     const [boostSuccess, setBoostSuccess] = useState(false);
     const [boostError, setBoostError] = useState('');
     const [totalSqMeters, setTotalSqMeters] = useState(0);
+    const [whyOpen, setWhyOpen] = useState(false);
     const BASE_GOAL = 500;
     const [formData, setFormData] = useState(() => {
         const saved = JSON.parse(localStorage.getItem('sponsoring_registered') || 'null');
@@ -509,10 +510,32 @@ const Register = () => {
                         </p>
 
                         {/* WARUM 15 € */}
-                        <div className="mb-6">
-                            <p className="text-yellow-300 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{t.whyTitle}</p>
-                            <p className="text-white/70 text-sm leading-relaxed mb-2">{t.whyP1}</p>
-                            <p className="text-white/70 text-sm leading-relaxed">{t.whyP2}</p>
+                        <div className="mb-6 border border-white/25 rounded-xl overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => setWhyOpen(prev => !prev)}
+                                className="flex items-center justify-between w-full text-left px-4 py-3 cursor-pointer hover:bg-white/10 active:bg-white/15 transition-colors"
+                            >
+                                <p className="text-yellow-300 text-[10px] font-black uppercase tracking-[0.2em]">{t.whyTitle}</p>
+                                <ChevronRight className={`w-5 h-5 text-yellow-300 shrink-0 transition-transform duration-200 ${whyOpen ? 'rotate-90' : ''}`} />
+                            </button>
+                            <AnimatePresence initial={false}>
+                                {whyOpen && (
+                                    <motion.div
+                                        key="why"
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        style={{ overflow: 'hidden' }}
+                                    >
+                                        <div className="px-4 pb-4 pt-1 border-t border-white/15">
+                                            <p className="text-white/70 text-sm leading-relaxed mb-2">{t.whyP1}</p>
+                                            <p className="text-white/70 text-sm leading-relaxed">{t.whyP2}</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* Hadith */}
@@ -528,13 +551,12 @@ const Register = () => {
                             <p className="text-white/50 text-xs mt-2 italic text-right" dir={t.dir}>{t.haditSource}</p>
                         </div>
 
-                        <div className="flex items-center space-x-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <div className="text-yellow-300 font-black text-xl sm:text-2xl">{pricePerUnit}€</div>
-                            <div className="text-white/70 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="mt-4 bg-white/10 border border-white/20 rounded-2xl p-4">
+                        {/* Price + Progress Bar combined */}
+                        <div className="bg-white/10 border border-white/20 rounded-2xl p-4">
+                            <div className="flex items-center space-x-4 pb-3 mb-3 border-b border-white/10">
+                                <div className="text-yellow-300 font-black text-xl sm:text-2xl">{pricePerUnit}€</div>
+                                <div className="text-white/70 text-xs sm:text-sm font-medium uppercase tracking-wider">{t.priceUnit}</div>
+                            </div>
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider">{t.progressLabel}</span>
                                 <span className="text-white font-black text-sm">{totalSqMeters} / {BASE_GOAL}</span>
