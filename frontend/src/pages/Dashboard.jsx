@@ -13,7 +13,6 @@ const DASH_T = {
         live: 'Live',
         spender: 'Spender',
         milestone: 'Meilenstein Erreicht!',
-        kauf: 'Kauf',
         langToggle: 'عربي',
         chatDonated: (amount) => `hat ${amount} Gebetsplätze gespendet`,
         chatCash: (cashAmt) => `es wurde €${cashAmt} bar gespendet`,
@@ -32,7 +31,6 @@ const DASH_T = {
         live: 'مباشر',
         spender: 'متبرع',
         milestone: 'تم الوصول للهدف!',
-        kauf: 'شراء',
         langToggle: 'DE',
         chatDonated: (amount) => `تبرع بـ ${amount} مصلى`,
         chatCash: (cashAmt) => `تبرع بـ €${cashAmt} نقداً`,
@@ -421,11 +419,7 @@ const Dashboard = () => {
 
     const bookedCount = stats.bookedIndices.length;
     const activeUnits = useMemo(() => Array.from({ length: BASE_GOAL }, (_, i) => i), []);
-    const overflowM2 = Math.max(0, stats.totalSqMeters - BASE_GOAL);
-    const goalReached = stats.totalSqMeters >= BASE_GOAL;
-    const totalForBar = Math.max(stats.totalSqMeters, BASE_GOAL);
-    const greenPercent = goalReached ? (BASE_GOAL / totalForBar * 100) : (stats.totalSqMeters / BASE_GOAL * 100);
-    const goldPercent = goalReached ? (overflowM2 / totalForBar * 100) : 0;
+    const greenPercent = Math.min((stats.totalSqMeters / BASE_GOAL) * 100, 100);
     const donationTotal = Number(stats.totalAmount || 0) + Number(stats.totalAmountCash || 0);
 
     if (dashboardLocked) {
@@ -549,7 +543,7 @@ const Dashboard = () => {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(6px, 0.94vw, 18px)', flexShrink: 0 }}>
                     <Target size={S(44)} style={{ color: '#9ca3af' }} />
                     <span style={{ fontSize: 'clamp(32px, 6.25vw, 120px)', fontWeight: 900, color: '#111827', lineHeight: 1, letterSpacing: '-0.03em' }}>
-                        {Math.min(stats.totalSqMeters, BASE_GOAL)}
+                        {stats.totalSqMeters}
                     </span>
                     <span style={{ fontSize: 'clamp(16px, 3.13vw, 60px)', fontWeight: 700, color: '#6b7280' }}>/ {BASE_GOAL}</span>
                 </div>
@@ -557,11 +551,6 @@ const Dashboard = () => {
                     <motion.div initial={{ width: 0 }} animate={{ width: `${greenPercent}%` }}
                         transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
                         style={{ height: '100%', background: 'linear-gradient(90deg, #059669, #10b981, #34d399)' }} />
-                    {goalReached && goldPercent > 0 && (
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${goldPercent}%` }}
-                            transition={{ duration: 1.5, delay: 0.3 }}
-                            style={{ height: '100%', background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
-                    )}
                 </div>
                 <span style={{ fontSize: 'clamp(32px, 6.25vw, 120px)', fontWeight: 900, color: '#059669', letterSpacing: '-0.03em', flexShrink: 0, lineHeight: 1 }}>
                     {((stats.totalSqMeters / BASE_GOAL) * 100).toFixed(1)}%
@@ -582,14 +571,6 @@ const Dashboard = () => {
                     </div>
                     <span style={{ color: '#10b981', fontSize: 'clamp(8px, 0.9vw, 16px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.monatlich}</span>
                 </div>
-                {goalReached && overflowM2 > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#fffbeb', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #fde68a', flexShrink: 0 }}>
-                        <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#92400e', lineHeight: 1 }}>
-                            &euro;{(overflowM2 * pricePerUnit * 12).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </span>
-                        <span style={{ color: '#b45309', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.kauf}</span>
-                    </div>
-                )}
                 {/* Language Toggle + Live */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(4px, 0.5vw, 10px)', flexShrink: 0 }}>
                     <button onClick={toggleLang}
@@ -632,11 +613,6 @@ const Dashboard = () => {
                 <motion.div initial={{ width: 0 }} animate={{ width: `${greenPercent}%` }}
                     transition={{ duration: 2, ease: 'easeOut' }}
                     style={{ height: '100%', background: 'linear-gradient(90deg, #059669, #10b981, #34d399)' }} />
-                {goalReached && goldPercent > 0 && (
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${goldPercent}%` }}
-                        transition={{ duration: 2, delay: 0.5, ease: 'easeOut' }}
-                        style={{ height: '100%', background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
-                )}
             </div>
 
             {/* Register QR Code */}

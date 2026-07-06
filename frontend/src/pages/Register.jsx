@@ -40,7 +40,7 @@ const REG_T = {
         anonymousLabel: 'Anonym spenden (Name wird nicht auf der Spenderwand angezeigt)',
         noticeLabel: 'Ich verstehe, dass meine Spende keinen festen, physischen Gebetsplatz reserviert, sondern dazu dient, die monatlichen Betriebskosten der Moschee zu decken.',
         noticeErr: 'Bitte bestätige, dass du die Bedeutung dieser Spende verstanden hast.',
-        progressLabel: 'Gebetsplätze belegt',
+        progressLabel: 'Gebetsplätze gesponsert',
         mandateLabel: 'Ich ermächtige Islamisches Zentrum Stuttgart e.V., Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die vom Islamisches Zentrum Stuttgart e.V. auf mein Konto gezogenen Lastschriften einzulösen.',
         submitBtn: (amount) => `Jetzt Spenden ${amount}€/Monat`,
         successHeading: 'Herzlichen Dank!',
@@ -100,7 +100,7 @@ const REG_T = {
         anonymousLabel: 'تبرع بشكل مجهول (لن يُعرض اسمك على جدار المتبرعين)',
         noticeLabel: 'أفهم أن تبرعي لا يحجز مصلى فعلياً ثابتاً، بل يُستخدم لتغطية التكاليف التشغيلية الشهرية للمسجد.',
         noticeErr: 'يرجى تأكيد أنك فهمت معنى هذا التبرع.',
-        progressLabel: 'مصلى محجوز',
+        progressLabel: 'مصلى مكفول',
         mandateLabel: 'أفوّض Islamisches Zentrum Stuttgart e.V. بخصم المدفوعات من حسابي مباشرةً. وفي الوقت ذاته أوجّه مصرفي بصرف هذه المدفوعات.',
         submitBtn: (amount) => `تبرع الآن ${amount}€/شهر`,
         successHeading: 'شكراً جزيلاً!',
@@ -537,7 +537,7 @@ const Register = () => {
                         <div className="mt-4 bg-white/10 border border-white/20 rounded-2xl p-4">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider">{t.progressLabel}</span>
-                                <span className="text-white font-black text-sm">{Math.min(totalSqMeters, BASE_GOAL)} / {BASE_GOAL}</span>
+                                <span className="text-white font-black text-sm">{totalSqMeters} / {BASE_GOAL}</span>
                             </div>
                             <div className="h-3 bg-white/20 rounded-full overflow-hidden">
                                 <div
@@ -546,7 +546,7 @@ const Register = () => {
                                 />
                             </div>
                             <div className="text-right mt-1">
-                                <span className="text-yellow-300 font-black text-xs">{((Math.min(totalSqMeters, BASE_GOAL) / BASE_GOAL) * 100).toFixed(1)}%</span>
+                                <span className="text-yellow-300 font-black text-xs">{((totalSqMeters / BASE_GOAL) * 100).toFixed(1)}%</span>
                             </div>
                         </div>
                     </div>
