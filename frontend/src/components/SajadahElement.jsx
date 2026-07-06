@@ -15,13 +15,17 @@ const SajadahElement = ({ isBooked, delay, index, isMinified, isOverflow }) => {
     }
 
     // Farben je nach Status
-    const bg = isBooked
-        ? 'linear-gradient(to bottom, #4db88a, #2d8a63)'
-        : 'linear-gradient(to bottom, #f9c4c4, #f0abab)';
-    const borderColor = isBooked ? '#3da87a' : '#edb8b8';
-    const shadow = isBooked
-        ? '0 2px 8px rgba(45,138,99,0.25)'
-        : '0 2px 6px rgba(220,160,160,0.2)';
+    const bg = isOverflow
+        ? 'linear-gradient(to bottom, #fbbf24, #d97706)'
+        : isBooked
+            ? 'linear-gradient(to bottom, #4db88a, #2d8a63)'
+            : 'linear-gradient(to bottom, #f9c4c4, #f0abab)';
+    const borderColor = isOverflow ? '#d97706' : isBooked ? '#3da87a' : '#edb8b8';
+    const shadow = isOverflow
+        ? '0 2px 8px rgba(217,119,6,0.3)'
+        : isBooked
+            ? '0 2px 8px rgba(45,138,99,0.25)'
+            : '0 2px 6px rgba(220,160,160,0.2)';
 
     // Muster-Farben
     const line1 = isBooked ? 'rgba(255,255,255,0.3)' : 'rgba(153,27,27,0.22)';

@@ -13,6 +13,7 @@ const DASH_T = {
         live: 'Live',
         spender: 'Spender',
         milestone: 'Meilenstein Erreicht!',
+        extraLabel: 'Extra Gebetsplätze',
         langToggle: 'عربي',
         chatDonated: (amount) => `hat ${amount} Gebetsplätze gespendet`,
         chatCash: (cashAmt) => `es wurde €${cashAmt} bar gespendet`,
@@ -31,6 +32,7 @@ const DASH_T = {
         live: 'مباشر',
         spender: 'متبرع',
         milestone: 'تم الوصول للهدف!',
+        extraLabel: 'مصلى إضافي',
         langToggle: 'DE',
         chatDonated: (amount) => `تبرع بـ ${amount} مصلى`,
         chatCash: (cashAmt) => `تبرع بـ €${cashAmt} نقداً`,
@@ -162,7 +164,7 @@ const Dashboard = () => {
         const container = carpetScrollRef.current;
         const totalHeight = container.scrollHeight;
         const viewHeight = container.clientHeight;
-        const rowHeight = totalHeight / Math.ceil(BASE_GOAL / COLS);
+        const rowHeight = totalHeight / Math.ceil(Math.max(BASE_GOAL, stats.bookedIndices.length) / COLS);
         const bookedRows = Math.floor(stats.bookedIndices.length / COLS);
         const targetScroll = Math.max(0, (bookedRows - Math.floor(viewHeight / rowHeight) + 2) * rowHeight);
         container.scrollTo({ top: targetScroll, behavior: 'smooth' });
@@ -418,6 +420,7 @@ const Dashboard = () => {
     );
 
     const bookedCount = stats.bookedIndices.length;
+    const overflowCount = Math.max(0, bookedCount - BASE_GOAL);
     const activeUnits = useMemo(() => Array.from({ length: BASE_GOAL }, (_, i) => i), []);
     const greenPercent = Math.min((stats.totalSqMeters / BASE_GOAL) * 100, 100);
     const donationTotal = Number(stats.totalAmount || 0) + Number(stats.totalAmountCash || 0);
@@ -595,6 +598,18 @@ const Dashboard = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`, gap: 'clamp(3px, 0.52vw, 10px)', padding: `clamp(20px, 4.2vw, 80px) clamp(16px, 3.75vw, 72px)` }}>
                         {activeUnits.map((idx) => (
                             <SajadahElement key={idx} index={idx} isBooked={idx < bookedCount} isOverflow={false} delay={(idx % COLS) * 0.003} />
+                        ))}
+                        {overflowCount > 0 && (
+                            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.25vw, 24px)', margin: 'clamp(14px, 2.1vw, 40px) 0 clamp(2px, 0.5vw, 10px)' }}>
+                                <div style={{ flex: 1, height: 'clamp(2px, 0.2vw, 4px)', background: 'linear-gradient(90deg, transparent, #f59e0b)', borderRadius: '999px' }} />
+                                <span style={{ color: '#b45309', fontSize: 'clamp(10px, 1.4vw, 28px)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>
+                                    +{overflowCount} {dt.extraLabel}
+                                </span>
+                                <div style={{ flex: 1, height: 'clamp(2px, 0.2vw, 4px)', background: 'linear-gradient(90deg, #f59e0b, transparent)', borderRadius: '999px' }} />
+                            </div>
+                        )}
+                        {overflowCount > 0 && Array.from({ length: overflowCount }, (_, i) => BASE_GOAL + i).map((idx) => (
+                            <SajadahElement key={idx} index={idx} isBooked isOverflow delay={(idx % COLS) * 0.003} />
                         ))}
                     </div>
                     <div style={{ position: 'sticky', bottom: 0, left: 0, right: 0, height: 0, zIndex: 10, pointerEvents: 'none' }}>
