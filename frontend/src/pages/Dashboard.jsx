@@ -15,7 +15,7 @@ const DASH_T = {
         milestone: 'Meilenstein Erreicht!',
         extraLabel: 'Extra Gebetsplätze',
         langToggle: 'عربي',
-        chatDonated: (amount) => `hat ${amount} Gebetsplätze gespendet`,
+        chatDonated: (amount) => `hat ${amount} Gebetspl. gespendet`,
         chatCash: (cashAmt) => `es wurde €${cashAmt} bar gespendet`,
         boostAdminCall: 'Aufruf vom Admin',
         boostEmail: 'Deine E-Mail',
