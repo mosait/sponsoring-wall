@@ -1,26 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, CreditCard, ChevronRight, CheckCircle2, Building2, X, LayoutDashboard } from 'lucide-react';
+import { User, Mail, Phone, CreditCard, ChevronRight, CheckCircle2, X, LayoutDashboard } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { sendConfirmationEmail } from '../lib/emailService';
 import { isValidIBAN, electronicFormatIBAN } from 'ibantools';
 
 const REG_T = {
     de: {
-        badge: 'MONATLICHE BETRIEBSKOSTEN-AKTION',
+        badge: 'BETRIEBSKOSTEN\nAKTION',
         heading: 'HILF UNS, DIE MOSCHEE JEDEN MONAT AM LAUFEN ZU HALTEN',
-        description: 'Jeden Monat fallen 7.500 € an, um unsere Moschee zu betreiben: Miete, Nebenkosten, Instandhaltung sowie die Organisation der fünf täglichen Gebete, der Freitagspredigt und unserer Bildungs- und Gemeindeangebote.',
-        descriptionP2: 'Mit deiner monatlichen Spende trägst du direkt dazu bei, dass unsere Moschee dauerhaft offen und nutzbar bleibt – eine Sadaqah Jariyah, von der du noch lange nach deinem Tod profitierst.',
+        description: 'Jeden Monat fallen rund 7.500 € an, um unsere Moschee zu betreiben: Miete, Nebenkosten, Instandhaltung, Reinigung, Sanitäranlagen, die Organisation der fünf täglichen Gebete, der Freitagspredigt sowie unserer Bildungs- und Gemeindeangebote.',
+        descriptionP2: 'Mit deiner monatlichen Spende trägst du direkt dazu bei, dass unsere Moschee dauerhaft offen und nutzbar bleibt. Mit deinem Dauerauftrag werden deine Spenden zu einer Sadaqah Jariyah, von der du noch lange nach deinem Tod profitierst.',
         whyTitle: 'WARUM 15 € PRO GEBETSPLATZ?',
-        whyP1: 'Um unsere monatlichen Betriebskosten von 7.500 € greifbar zu machen, haben wir sie in 500 „Gebetsplätze“ à 15 € aufgeteilt – als symbolische Einheit, keine feste Platzreservierung.',
+        whyP1: 'Um unsere monatlichen Betriebskosten von rund 7.500 € greifbar zu machen, haben wir sie in 500 „Gebetsplätze“ à 15 € aufgeteilt – als symbolische Einheit, keine Platzreservierung.',
         whyP2: 'So siehst du genau was dein Beitrag bewirkt: Jeder Gebetsplatz den du übernimmst, hilft die Moschee für die gesamte Gemeinde offen und funktionsfähig zu halten.',
         haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
         haditTranslation: '„Wer eine Moschee um Allahs willen baut, sei es nur ein Spatzennest oder noch kleiner, dem wird Allah ein Haus im Paradies bauen."',
         haditSource: 'Sunan Ibn Majah 738',
         priceUnit: 'pro Gebetsplatz / Monat',
-        projectLabel: 'Projekt',
-        projectName: 'IZS Gebetsplatz 2026',
         nameLabel: 'Vollständiger Name',
         namePlaceholder: 'z.B. Abdullah Müller',
         emailLabel: 'E-Mail Adresse',
@@ -68,19 +66,17 @@ const REG_T = {
         dir: 'ltr',
     },
     ar: {
-        badge: 'حملة التكاليف التشغيلية الشهرية',
+        badge: 'حملة التكاليف التشغيلية',
         heading: 'ساعدنا في إبقاء المسجد يعمل كل شهر',
-        description: 'كل شهر نحتاج إلى 7.500 يورو لتشغيل مسجدنا: الإيجار والمرافق والصيانة وتنظيم الصلوات الخمس وصلاة الجمعة وبرامجنا التعليمية والمجتمعية.',
-        descriptionP2: 'بتبرعك الشهري تساهم مباشرةً في إبقاء مسجدنا مفتوحاً ومتاحاً دائماً – صدقةً جاريةً تنتفع بها بعد وفاتك.',
+        description: 'كل شهر تنشأ تكاليف تُقدَّر بنحو 7.500 يورو لتشغيل مسجدنا: الإيجار والمرافق والصيانة والتنظيف ودورات المياه، وتنظيم الصلوات الخمس وصلاة الجمعة، إضافةً إلى برامجنا التعليمية والمجتمعية.',
+        descriptionP2: 'بتبرعك الشهري تساهم مباشرةً في إبقاء مسجدنا مفتوحاً ومتاحاً دائماً. وبتفويضك للخصم الشهري، تتحول تبرعاتك إلى صدقة جارية ينتفع بها لفترة طويلة بعد وفاتك.',
         whyTitle: 'لماذا 15 يورو لكل مصلى؟',
-        whyP1: 'لجعل التكاليف التشغيلية الشهرية البالغة 7.500 يورو ملموسةً، قسّمناها إلى 500 “مصلى” بـ 15 يورو لكل منها – كوحدة رمزية، وليست حجزاً فعلياً لمكان.',
+        whyP1: 'لجعل التكاليف التشغيلية الشهرية البالغة نحو 7.500 يورو ملموسةً، قسّمناها إلى 500 “مصلى” بـ 15 يورو لكل منها – كوحدة رمزية، وليست حجزاً فعلياً لمكان.',
         whyP2: 'هكذا ترى بدقة ما يُحدثه مساهمتك: كل مصلى تتبناه يساعد في إبقاء المسجد مفتوحاً وعاملاً لفائدة الجميع.',
         haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
         haditTranslation: null,
         haditSource: 'سنن ابن ماجه ٧٣٨',
         priceUnit: 'لكل مصلى / شهرياً',
-        projectLabel: 'المشروع',
-        projectName: 'IZS Gebetsplatz 2026',
         nameLabel: 'الاسم الكامل',
         namePlaceholder: 'مثال: عبدالله مولر',
         emailLabel: 'البريد الإلكتروني',
@@ -483,9 +479,15 @@ const Register = () => {
                 {/* Left Side */}
                 <div className="bg-[#1a6b3c] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
                     <div className="relative z-10">
-                        <div className="flex items-start justify-between gap-3 mb-6">
-                            <div className="inline-block px-4 py-1.5 bg-white/10 rounded-full text-xs font-bold tracking-[0.2em] uppercase border border-white/10">
-                                {t.badge}
+                        <div className="flex items-center justify-between gap-3 mb-6">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                                    <img src="/logo.png" alt="IZS Logo" className="w-6 h-6 object-contain"
+                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:10px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
+                                </div>
+                                <div className="inline-block px-4 py-1.5 bg-white/10 rounded-2xl text-xs font-bold tracking-[0.2em] uppercase border border-white/10 whitespace-pre-line leading-tight">
+                                    {t.badge}
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                                 {/* Dashboard link */}
@@ -569,21 +571,6 @@ const Register = () => {
                             </div>
                             <div className="text-right mt-1">
                                 <span className="text-yellow-300 font-black text-xs">{((totalSqMeters / BASE_GOAL) * 100).toFixed(1)}%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="mt-10 pt-10 border-t border-white/10 relative z-10">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <Building2 className="w-8 h-8 text-white/50 shrink-0" />
-                                <div>
-                                    <div className="font-bold uppercase tracking-widest text-xs text-white/50">{t.projectLabel}</div>
-                                    <div className="font-black text-sm">{t.projectName}</div>
-                                </div>
-                            </div>
-                            <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
-                                <img src="/logo.png" alt="IZS Logo" className="w-16 h-16 object-contain"
-                                    onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:28px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
                             </div>
                         </div>
                     </div>
