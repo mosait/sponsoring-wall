@@ -479,26 +479,26 @@ const Register = () => {
                 {/* Left Side */}
                 <div className="bg-[#1a6b3c] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
                     <div className="relative z-10">
-                        <div className="flex items-center justify-between gap-3 mb-6">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                                    <img src="/logo.png" alt="IZS Logo" className="w-14 h-14 object-contain"
-                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:18px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
+                        <div className="flex items-center justify-between gap-2 sm:gap-3 mb-6">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                                <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                                    <img src="/logo.png" alt="IZS Logo" className="w-8 h-8 sm:w-14 sm:h-14 object-contain"
+                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:12px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
                                 </div>
-                                <div className="inline-block px-4 py-1.5 bg-white/10 rounded-2xl text-xs font-bold tracking-[0.2em] uppercase border border-white/10 whitespace-pre-line leading-tight">
+                                <div className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-white/10 rounded-2xl text-[10px] sm:text-xs font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase border border-white/10 whitespace-pre-line leading-tight">
                                     {t.badge}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                 {/* Dashboard link */}
                                 <button onClick={() => navigate('/dashboard')}
                                     title={t.dashboardBtn}
-                                    className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all flex items-center justify-center shrink-0">
-                                    <LayoutDashboard className="w-4 h-4" />
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all flex items-center justify-center shrink-0">
+                                    <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                                 {/* Language Toggle */}
                                 <button onClick={toggleLang}
-                                    className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-black tracking-widest hover:bg-white/20 transition-all">
+                                    className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-[10px] sm:text-xs font-black tracking-widest hover:bg-white/20 transition-all">
                                     {t.langToggle}
                                 </button>
                             </div>
