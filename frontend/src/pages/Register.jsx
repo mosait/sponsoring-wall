@@ -10,10 +10,10 @@ const REG_T = {
     de: {
         badge: 'BETRIEBSKOSTEN\nAKTION',
         heading: 'HILF UNS, DIE MOSCHEE JEDEN MONAT AM LAUFEN ZU HALTEN',
-        description: 'Jeden Monat fallen rund 7.500 € an, um unsere Moschee zu betreiben: Miete, Nebenkosten, Instandhaltung, Reinigung, Sanitäranlagen, die Organisation der fünf täglichen Gebete, der Freitagspredigt sowie unserer Bildungs- und Gemeindeangebote.',
+        description: 'Jeden Monat fallen rund 7.500€ an, um unsere Moschee zu betreiben: Miete, Nebenkosten, Instandhaltung, Reinigung, Sanitäranlagen, die Organisation der fünf täglichen Gebete, der Freitagspredigt sowie unserer Bildungs- und Gemeindeangebote.',
         descriptionP2: 'Mit deiner monatlichen Spende trägst du direkt dazu bei, dass unsere Moschee dauerhaft offen und nutzbar bleibt. Mit deinem Dauerauftrag werden deine Spenden zu einer Sadaqah Jariyah, von der du noch lange nach deinem Tod profitierst.',
-        whyTitle: 'WARUM 15 € PRO GEBETSPLATZ?',
-        whyP1: 'Um unsere monatlichen Betriebskosten von rund 7.500 € greifbar zu machen, haben wir sie in 500 „Gebetsplätze“ à 15 € aufgeteilt – als symbolische Einheit, keine Platzreservierung.',
+        whyTitle: 'WARUM 15€ PRO GEBETSPLATZ?',
+        whyP1: 'Um unsere monatlichen Betriebskosten von rund 7.500€ greifbar zu machen, haben wir sie in 500 „Gebetsplätze“ à 15€ aufgeteilt – als symbolische Einheit, keine Platzreservierung.',
         whyP2: 'So siehst du genau was dein Beitrag bewirkt: Jeder Gebetsplatz den du übernimmst, hilft die Moschee für die gesamte Gemeinde offen und funktionsfähig zu halten.',
         haditArabic: 'مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ',
         haditTranslation: '„Wer eine Moschee um Allahs willen baut, sei es nur ein Spatzennest oder noch kleiner, dem wird Allah ein Haus im Paradies bauen."',
@@ -481,9 +481,9 @@ const Register = () => {
                     <div className="relative z-10">
                         <div className="flex items-center justify-between gap-3 mb-6">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                                    <img src="/logo.png" alt="IZS Logo" className="w-10 h-10 object-contain"
-                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:14px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
+                                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                                    <img src="/logo.png" alt="IZS Logo" className="w-14 h-14 object-contain"
+                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:18px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
                                 </div>
                                 <div className="inline-block px-4 py-1.5 bg-white/10 rounded-2xl text-xs font-bold tracking-[0.2em] uppercase border border-white/10 whitespace-pre-line leading-tight">
                                     {t.badge}
