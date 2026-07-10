@@ -481,9 +481,9 @@ const Register = () => {
                     <div className="relative z-10">
                         <div className="flex items-center justify-between gap-3 mb-6">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                                    <img src="/logo.png" alt="IZS Logo" className="w-6 h-6 object-contain"
-                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:10px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
+                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                                    <img src="/logo.png" alt="IZS Logo" className="w-10 h-10 object-contain"
+                                        onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:14px;font-weight:900;color:#1a6b3c">IZS</span>'; }} />
                                 </div>
                                 <div className="inline-block px-4 py-1.5 bg-white/10 rounded-2xl text-xs font-bold tracking-[0.2em] uppercase border border-white/10 whitespace-pre-line leading-tight">
                                     {t.badge}
