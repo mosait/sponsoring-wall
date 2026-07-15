@@ -529,7 +529,7 @@ const Dashboard = () => {
                                             : <>es wurde <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span> bar gespendet</>
                                         : lang === 'ar'
                                             ? <>{dt.chatDonated(msg.amount)}</>
-                                            : <>hat <span style={{ color: '#059669', fontWeight: 700 }}>{msg.amount} Gebetsplätze</span> gespendet</>
+                                            : <>hat <span style={{ color: '#059669', fontWeight: 700 }}>{msg.amount} Gebetspl.</span> gespendet</>
                                     }
                                 </div>
                             </div>
