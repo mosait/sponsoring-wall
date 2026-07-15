@@ -47,6 +47,7 @@ const REG_T = {
         dashboardBtn: 'Zur Spenderwand',
         errorTitle: 'Registrierung nicht möglich',
         validNameErr: 'Bitte einen gültigen Namen eingeben.',
+        validEmailErr: 'Bitte eine gültige E-Mail-Adresse eingeben.',
         validIbanErr: 'Bitte eine valide IBAN eingeben (z.B. DE89370400440532013000)',
         mandateErr: 'Bitte das SEPA-Lastschriftmandat akzeptieren.',
         saveErr: (msg) => `Fehler beim Speichern: ${msg || 'Unbekannter Fehler'}`,
@@ -105,6 +106,7 @@ const REG_T = {
         dashboardBtn: 'إلى جدار المتبرعين',
         errorTitle: 'التسجيل غير ممكن',
         validNameErr: 'يرجى إدخال اسم صحيح.',
+        validEmailErr: 'يرجى إدخال بريد إلكتروني صحيح.',
         validIbanErr: 'يرجى إدخال IBAN صحيح (مثال: DE89370400440532013000)',
         mandateErr: 'يرجى قبول تفويض الخصم المباشر SEPA.',
         saveErr: (msg) => `خطأ في الحفظ: ${msg || 'خطأ غير معروف'}`,
@@ -132,6 +134,7 @@ const Register = () => {
     const [submitted, setSubmitted] = useState(false);
     const [pricePerUnit, setPricePerUnit] = useState(15);
     const [errorMsg, setErrorMsg] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [registerStopMode, setRegisterStopMode] = useState('open');
     const [boostModal, setBoostModal] = useState(null);
     const [boostAmount, setBoostAmount] = useState('');
@@ -146,7 +149,7 @@ const Register = () => {
         return {
             full_name: saved?.name || '',
             email: saved?.email || '',
-            phone: '',
+            phone: saved?.phone || '',
             iban: saved?.iban || '',
             sq_meters: 1,
             mandate_accepted: false,
@@ -216,6 +219,8 @@ const Register = () => {
 
     const sanitize = (str) => str.replace(/[<>]/g, '').trim();
 
+    const clearFieldError = (field) => setFieldErrors(prev => (prev[field] ? { ...prev, [field]: false } : prev));
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMsg('');
@@ -225,25 +230,20 @@ const Register = () => {
         const cleanPhone = sanitize(formData.phone);
         const cleanIban = formData.iban.replace(/\s/g, '').toUpperCase();
 
-        if (!cleanName || cleanName.length < 2) {
-            setErrorMsg(t.validNameErr);
-            return;
-        }
+        const errors = {};
+        let msg = '';
+        if (!cleanName || cleanName.length < 2) { errors.full_name = true; msg = msg || t.validNameErr; }
+        if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { errors.email = true; msg = msg || t.validEmailErr; }
+        if (!validateIBAN(cleanIban)) { errors.iban = true; msg = msg || t.validIbanErr; }
+        if (!formData.notice_understood) { errors.notice_understood = true; msg = msg || t.noticeErr; }
+        if (!formData.mandate_accepted) { errors.mandate_accepted = true; msg = msg || t.mandateErr; }
 
-        if (!validateIBAN(cleanIban)) {
-            setErrorMsg(t.validIbanErr);
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            setErrorMsg(msg);
             return;
         }
-
-        if (!formData.notice_understood) {
-            setErrorMsg(t.noticeErr);
-            return;
-        }
-
-        if (!formData.mandate_accepted) {
-            setErrorMsg(t.mandateErr);
-            return;
-        }
+        setFieldErrors({});
 
         setLoading(true);
 
@@ -269,6 +269,7 @@ const Register = () => {
             localStorage.setItem('sponsoring_registered', JSON.stringify({
                 name: cleanName,
                 email: cleanEmail,
+                phone: cleanPhone,
                 iban: cleanIban
             }));
             sendConfirmationEmail({
@@ -307,6 +308,7 @@ const Register = () => {
         localStorage.setItem('sponsoring_registered', JSON.stringify({
             name: boostModal.name,
             email: boostModal.email,
+            phone: boostModal.phone,
             iban: boostModal.iban
         }));
         sendConfirmationEmail({
@@ -413,7 +415,7 @@ const Register = () => {
                             setFormData({
                                 full_name: saved?.name || '',
                                 email: saved?.email || '',
-                                phone: '',
+                                phone: saved?.phone || '',
                                 iban: saved?.iban || '',
                                 sq_meters: 1,
                                 mandate_accepted: false,
@@ -579,7 +581,7 @@ const Register = () => {
 
                 {/* Right Side: Form */}
                 <div className="p-6 sm:p-10">
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} noValidate className="space-y-5">
                         <div className="grid grid-cols-1 gap-5">
 
                             {/* Name */}
@@ -589,10 +591,10 @@ const Register = () => {
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#1a6b3c] transition-colors" />
                                     <input
                                         type="text" required
-                                        className="w-full bg-gray-50 border-2 border-transparent focus:border-[#1a6b3c] focus:bg-white rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]"
+                                        className={`w-full bg-gray-50 border-2 ${fieldErrors.full_name ? 'border-red-400' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'} rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]`}
                                         placeholder={t.namePlaceholder}
                                         value={formData.full_name}
-                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                        onChange={(e) => { clearFieldError('full_name'); setFormData({ ...formData, full_name: e.target.value }); }}
                                     />
                                 </div>
                             </div>
@@ -605,10 +607,10 @@ const Register = () => {
                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#1a6b3c] transition-colors" />
                                         <input
                                             type="email" required
-                                            className="w-full bg-gray-50 border-2 border-transparent focus:border-[#1a6b3c] focus:bg-white rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]"
+                                            className={`w-full bg-gray-50 border-2 ${fieldErrors.email ? 'border-red-400' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'} rounded-xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#0c151a]`}
                                             placeholder={t.emailPlaceholder}
                                             value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            onChange={(e) => { clearFieldError('email'); setFormData({ ...formData, email: e.target.value }); }}
                                         />
                                     </div>
                                 </div>
@@ -695,10 +697,10 @@ const Register = () => {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.ibanLabel}</label>
                                     <input type="text" required
-                                        className="w-full bg-gray-50 border-2 border-transparent focus:border-[#1a6b3c] focus:bg-white rounded-xl py-4 px-4 outline-none transition-all font-bold tracking-widest uppercase text-[#0c151a]"
+                                        className={`w-full bg-gray-50 border-2 ${fieldErrors.iban ? 'border-red-400' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'} rounded-xl py-4 px-4 outline-none transition-all font-bold tracking-widest uppercase text-[#0c151a]`}
                                         placeholder={t.ibanPlaceholder}
                                         value={formData.iban}
-                                        onChange={(e) => { setErrorMsg(''); setFormData({ ...formData, iban: e.target.value }); }}
+                                        onChange={(e) => { setErrorMsg(''); clearFieldError('iban'); setFormData({ ...formData, iban: e.target.value }); }}
                                     />
                                 </div>
 
@@ -720,12 +722,12 @@ const Register = () => {
                                     <div className="relative mt-1 shrink-0">
                                         <input type="checkbox" className="peer hidden"
                                             checked={formData.notice_understood}
-                                            onChange={(e) => setFormData({ ...formData, notice_understood: e.target.checked })}
+                                            onChange={(e) => { clearFieldError('notice_understood'); setFormData({ ...formData, notice_understood: e.target.checked }); }}
                                         />
-                                        <div className="w-5 h-5 border-2 border-gray-300 rounded peer-checked:bg-[#1a6b3c] peer-checked:border-[#1a6b3c] transition-all" />
+                                        <div className={`w-5 h-5 border-2 ${fieldErrors.notice_understood ? 'border-red-400' : 'border-gray-300'} rounded peer-checked:bg-[#1a6b3c] peer-checked:border-[#1a6b3c] transition-all`} />
                                         <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                                     </div>
-                                    <span className="text-[11px] text-gray-500 font-medium leading-relaxed group-hover:text-gray-700">
+                                    <span className={`text-[11px] font-medium leading-relaxed ${fieldErrors.notice_understood ? 'text-red-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
                                         {t.noticeLabel}
                                     </span>
                                 </label>
@@ -734,12 +736,12 @@ const Register = () => {
                                     <div className="relative mt-1 shrink-0">
                                         <input type="checkbox" required className="peer hidden"
                                             checked={formData.mandate_accepted}
-                                            onChange={(e) => { setErrorMsg(''); setFormData({ ...formData, mandate_accepted: e.target.checked }); }}
+                                            onChange={(e) => { setErrorMsg(''); clearFieldError('mandate_accepted'); setFormData({ ...formData, mandate_accepted: e.target.checked }); }}
                                         />
-                                        <div className="w-5 h-5 border-2 border-gray-300 rounded peer-checked:bg-[#1a6b3c] peer-checked:border-[#1a6b3c] transition-all" />
+                                        <div className={`w-5 h-5 border-2 ${fieldErrors.mandate_accepted ? 'border-red-400' : 'border-gray-300'} rounded peer-checked:bg-[#1a6b3c] peer-checked:border-[#1a6b3c] transition-all`} />
                                         <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                                     </div>
-                                    <span className="text-[11px] text-gray-500 font-medium leading-relaxed group-hover:text-gray-700">
+                                    <span className={`text-[11px] font-medium leading-relaxed ${fieldErrors.mandate_accepted ? 'text-red-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
                                         {t.mandateLabel}
                                     </span>
                                 </label>

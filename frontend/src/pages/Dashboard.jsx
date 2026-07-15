@@ -337,6 +337,7 @@ const Dashboard = () => {
         localStorage.setItem('sponsoring_registered', JSON.stringify({
             name: boostModal.name,
             email: boostModal.email,
+            phone: boostModal.phone,
             iban: boostModal.iban
         }));
         sendConfirmationEmail({
@@ -490,7 +491,7 @@ const Dashboard = () => {
                 overflow: 'hidden',
             }}>
                 <AnimatePresence mode='popLayout'>
-                    {chatMessages.map((msg) => (
+                    {(windowWidth < 768 ? chatMessages.slice(0, 3) : chatMessages).map((msg) => (
                         <motion.div
                             key={msg.id}
                             layout
