@@ -50,6 +50,7 @@ const REG_T = {
         validEmailErr: 'Bitte eine gültige E-Mail-Adresse eingeben.',
         validIbanErr: 'Bitte eine valide IBAN eingeben (z.B. DE89370400440532013000)',
         mandateErr: 'Bitte das SEPA-Lastschriftmandat akzeptieren.',
+        euroMinErr: 'Bitte einen Betrag von mehr als 1€ pro Monat eingeben.',
         saveErr: (msg) => `Fehler beim Speichern: ${msg || 'Unbekannter Fehler'}`,
         boostSuccessTitle: 'Jazak Allahu Khairan!',
         boostSuccessText: 'Dein Beitrag wurde erfolgreich erhöht.',
@@ -109,6 +110,7 @@ const REG_T = {
         validEmailErr: 'يرجى إدخال بريد إلكتروني صحيح.',
         validIbanErr: 'يرجى إدخال IBAN صحيح (مثال: DE89370400440532013000)',
         mandateErr: 'يرجى قبول تفويض الخصم المباشر SEPA.',
+        euroMinErr: 'يرجى إدخال مبلغ أكبر من 1 يورو شهرياً.',
         saveErr: (msg) => `خطأ في الحفظ: ${msg || 'خطأ غير معروف'}`,
         boostSuccessTitle: 'جزاك الله خيراً!',
         boostSuccessText: 'تم رفع مساهمتك بنجاح.',
@@ -161,6 +163,11 @@ const Register = () => {
     });
 
     const t = REG_T[lang];
+
+    // In euro mode the entered euro is the source of truth; units are derived for display.
+    const euroValue = parseFloat(String(formData.monthlyEuro).replace(',', '.')) || 0;
+    const monthlyAmount = formData.inputMode === 'euro' ? euroValue : formData.sq_meters * pricePerUnit;
+    const euroUnits = euroValue / pricePerUnit;
 
     const toggleLang = () => {
         const next = lang === 'de' ? 'ar' : 'de';
@@ -234,6 +241,7 @@ const Register = () => {
         let msg = '';
         if (!cleanName || cleanName.length < 2) { errors.full_name = true; msg = msg || t.validNameErr; }
         if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { errors.email = true; msg = msg || t.validEmailErr; }
+        if (formData.inputMode === 'euro' && euroValue <= 1) { errors.monthlyEuro = true; msg = msg || t.euroMinErr; }
         if (!validateIBAN(cleanIban)) { errors.iban = true; msg = msg || t.validIbanErr; }
         if (!formData.notice_understood) { errors.notice_understood = true; msg = msg || t.noticeErr; }
         if (!formData.mandate_accepted) { errors.mandate_accepted = true; msg = msg || t.mandateErr; }
@@ -248,9 +256,7 @@ const Register = () => {
         setLoading(true);
 
         const addedSqMeters = formData.sq_meters;
-        const addedAmount = formData.inputMode === 'euro'
-            ? parseFloat(formData.monthlyEuro || 0)
-            : formData.sq_meters * pricePerUnit;
+        const addedAmount = monthlyAmount;
 
         // Upsert via SECURITY DEFINER Funktion — kein direkter Tabellenzugriff nötig
         const { error } = await supabase.rpc('register_sponsor', {
@@ -631,7 +637,7 @@ const Register = () => {
 
                             {/* Donation mode */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.howLabel}</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.howLabel}<span className="text-red-500 ml-0.5">*</span></label>
                                 <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
                                     <button type="button"
                                         onClick={() => setFormData({ ...formData, inputMode: 'sqm' })}
@@ -655,12 +661,16 @@ const Register = () => {
                                         </div>
                                         <input type="number"
                                             className={`w-full bg-gray-50 border-2 rounded-xl py-3 px-4 outline-none transition-all font-bold text-[#0c151a] text-sm ${formData.customSqm ? 'border-[#1a6b3c] bg-white' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'}`}
-                                            placeholder={t.customUnits} min="1"
+                                            placeholder={t.customUnits} min="1" step="1"
                                             value={formData.customSqm || ''}
                                             onChange={(e) => {
-                                                const raw = e.target.value;
-                                                const parsed = parseInt(raw) || 0;
-                                                setFormData({ ...formData, customSqm: raw, sq_meters: parsed > 0 ? parsed : 1 });
+                                                const num = parseFloat(e.target.value.replace(',', '.'));
+                                                if (!e.target.value || isNaN(num) || num <= 0) {
+                                                    setFormData({ ...formData, customSqm: '', sq_meters: 1 });
+                                                    return;
+                                                }
+                                                const units = Math.ceil(num); // whole prayer places only, round up
+                                                setFormData({ ...formData, customSqm: String(units), sq_meters: units });
                                             }}
                                         />
                                     </div>
@@ -669,20 +679,22 @@ const Register = () => {
                                         <div className="relative" dir="ltr">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-400">€</span>
                                             <input type="number"
-                                                className="w-full bg-gray-50 border-2 border-transparent focus:border-[#1a6b3c] focus:bg-white rounded-xl py-4 pl-12 pr-16 outline-none transition-all font-bold text-xl text-[#0c151a]"
-                                                placeholder="30" min="15" step="1"
+                                                className={`w-full bg-gray-50 border-2 ${fieldErrors.monthlyEuro ? 'border-red-400' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'} rounded-xl py-4 pl-12 pr-16 outline-none transition-all font-bold text-xl text-[#0c151a]`}
+                                                placeholder="15" min="1" step="0.01"
                                                 value={formData.monthlyEuro}
                                                 onChange={(e) => {
-                                                    const euros = parseFloat(e.target.value) || 0;
+                                                    clearFieldError('monthlyEuro');
+                                                    const raw = e.target.value.replace(/-/g, '');
+                                                    const euros = parseFloat(raw.replace(',', '.')) || 0;
                                                     const sqm = Math.floor(euros / pricePerUnit);
-                                                    setFormData({ ...formData, monthlyEuro: e.target.value, sq_meters: Math.max(sqm, 1) });
+                                                    setFormData({ ...formData, monthlyEuro: raw, sq_meters: Math.max(sqm, 1) });
                                                 }}
                                             />
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 tracking-wider">{t.perMonth}</span>
                                         </div>
                                         <div className="flex items-center justify-between bg-emerald-50 rounded-xl p-3 px-4 border border-emerald-200/50">
                                             <span className="text-emerald-700 text-xs font-bold">{t.resultLabel}</span>
-                                            <span className="text-emerald-800 text-lg font-black">{t.resultUnit(formData.sq_meters)}</span>
+                                            <span className="text-emerald-800 text-lg font-black">{t.resultUnit(euroUnits.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
                                         </div>
                                     </div>
                                 )}
@@ -774,7 +786,7 @@ const Register = () => {
                             ) : (
                                 <>
                                     <span className="text-4xl leading-none">✓</span>
-                                    <span className="flex-1 text-center">{t.submitBtn((formData.sq_meters * pricePerUnit).toFixed(2))}</span>
+                                    <span className="flex-1 text-center">{t.submitBtn(monthlyAmount.toFixed(2))}</span>
                                     <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
