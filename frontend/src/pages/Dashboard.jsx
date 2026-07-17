@@ -482,7 +482,7 @@ const Dashboard = () => {
                 bottom: windowWidth < 768 ? '10px' : 'clamp(40px, 3.1vw, 60px)',
                 left: windowWidth < 768 ? '6px' : 'clamp(12px, 3.1vw, 60px)',
                 zIndex: 100,
-                width: windowWidth < 768 ? '70vw' : 'clamp(240px, 42.7vw, 820px)',
+                width: windowWidth < 768 ? '50vw' : 'clamp(240px, 42.7vw, 820px)',
                 pointerEvents: 'none',
                 display: 'flex',
                 flexDirection: 'column-reverse',
@@ -662,12 +662,12 @@ const Dashboard = () => {
                     >
                         <QRCode
                             value={window.location.origin + '/register'}
-                            size={S(qrSize)}
+                            size={windowWidth < 768 ? Math.min(S(qrSize), 64) : S(qrSize)}
                             style={{ display: 'block' }}
                             viewBox="0 0 256 256"
                         />
                         <span style={{
-                            fontSize: S(Math.max(8, Math.round(qrSize * 0.07))),
+                            fontSize: windowWidth < 768 ? 8 : S(Math.max(8, Math.round(qrSize * 0.07))),
                             fontWeight: 900,
                             textTransform: 'uppercase',
                             letterSpacing: '0.15em',
