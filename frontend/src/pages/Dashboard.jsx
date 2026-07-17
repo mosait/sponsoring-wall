@@ -482,7 +482,7 @@ const Dashboard = () => {
                 bottom: windowWidth < 768 ? '10px' : 'clamp(40px, 3.1vw, 60px)',
                 left: windowWidth < 768 ? '6px' : 'clamp(12px, 3.1vw, 60px)',
                 zIndex: 100,
-                width: windowWidth < 768 ? '48vw' : 'clamp(240px, 42.7vw, 820px)',
+                width: windowWidth < 768 ? '70vw' : 'clamp(240px, 42.7vw, 820px)',
                 pointerEvents: 'none',
                 display: 'flex',
                 flexDirection: 'column-reverse',
@@ -491,7 +491,7 @@ const Dashboard = () => {
                 overflow: 'hidden',
             }}>
                 <AnimatePresence mode='popLayout'>
-                    {(windowWidth < 768 ? chatMessages.slice(0, 3) : chatMessages).map((msg) => (
+                    {(windowWidth < 768 ? chatMessages.slice(0, 3) : chatMessages.slice(0, 6)).map((msg) => (
                         <motion.div
                             key={msg.id}
                             layout
@@ -523,7 +523,7 @@ const Dashboard = () => {
                                         {msg.time}
                                     </span>
                                 </div>
-                                <div style={{ color: '#4b5563', fontSize: 'clamp(11px, 1.56vw, 30px)' }}>
+                                <div style={{ color: '#4b5563', fontSize: 'clamp(11px, 1.56vw, 30px)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {msg.isCash && msg.amount === 0
                                         ? lang === 'ar'
                                             ? <>تبرع بـ <span style={{ color: '#d97706', fontWeight: 700 }}>&euro;{msg.cashAmount}</span> نقداً</>
@@ -540,36 +540,36 @@ const Dashboard = () => {
             </div>
 
             {/* HEADER */}
-            <div ref={headerRef} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'clamp(8px, 3.1vw, 60px)', padding: 'clamp(12px, 2.3vw, 44px) clamp(16px, 4.2vw, 80px)', borderBottom: '3px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
+            <div ref={headerRef} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: windowWidth < 1024 ? '8px' : 'clamp(8px, 3.1vw, 60px)', padding: 'clamp(12px, 2.3vw, 44px) clamp(16px, 4.2vw, 80px)', borderBottom: '3px solid #e5e7eb', background: '#fff', flexShrink: 0, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
                 <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    <img src="/logo.png" alt="IZS Logo" style={{ height: 'clamp(80px, 10vw, 190px)', width: 'auto', display: 'block' }} />
+                    <img src="/logo.png" alt="IZS Logo" style={{ height: windowWidth < 1024 ? '60px' : 'clamp(80px, 10vw, 190px)', width: 'auto', display: 'block' }} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(6px, 0.94vw, 18px)', flexShrink: 0 }}>
                     <Target size={S(44)} style={{ color: '#9ca3af' }} />
-                    <span style={{ fontSize: 'clamp(32px, 6.25vw, 120px)', fontWeight: 900, color: '#111827', lineHeight: 1, letterSpacing: '-0.03em' }}>
+                    <span style={{ fontSize: windowWidth < 1024 ? '20px' : 'clamp(32px, 6.25vw, 120px)', fontWeight: 900, color: '#111827', lineHeight: 1, letterSpacing: '-0.03em' }}>
                         {stats.totalSqMeters}
                     </span>
-                    <span style={{ fontSize: 'clamp(16px, 3.13vw, 60px)', fontWeight: 700, color: '#6b7280' }}>/ {BASE_GOAL}</span>
+                    <span style={{ fontSize: windowWidth < 1024 ? '13px' : 'clamp(16px, 3.13vw, 60px)', fontWeight: 700, color: '#6b7280' }}>/ {BASE_GOAL}</span>
                 </div>
-                <div style={{ flex: 1, minWidth: 'clamp(100px, 10vw, 200px)', height: 'clamp(16px, 3.3vw, 64px)', background: '#d1d5db', borderRadius: '999px', overflow: 'hidden', display: 'flex' }}>
+                <div style={{ flex: 1, minWidth: windowWidth < 1024 ? '24px' : 'clamp(100px, 10vw, 200px)', height: 'clamp(16px, 3.3vw, 64px)', background: '#d1d5db', borderRadius: '999px', overflow: 'hidden', display: 'flex' }}>
                     <motion.div initial={{ width: 0 }} animate={{ width: `${greenPercent}%` }}
                         transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
                         style={{ height: '100%', background: 'linear-gradient(90deg, #059669, #10b981, #34d399)' }} />
                 </div>
-                <span style={{ fontSize: 'clamp(32px, 6.25vw, 120px)', fontWeight: 900, color: '#059669', letterSpacing: '-0.03em', flexShrink: 0, lineHeight: 1 }}>
+                <span style={{ fontSize: windowWidth < 1024 ? '20px' : 'clamp(32px, 6.25vw, 120px)', fontWeight: 900, color: '#059669', letterSpacing: '-0.03em', flexShrink: 0, lineHeight: 1 }}>
                     {((stats.totalSqMeters / BASE_GOAL) * 100).toFixed(1)}%
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#f9fafb', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #e5e7eb', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 0.94vw, 18px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(8px, 2.08vw, 40px)', background: '#f9fafb', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #e5e7eb', flexShrink: 0 }}>
                     <Users size={S(44)} style={{ color: '#9ca3af' }} />
-                    <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#111827', lineHeight: 1 }}>
+                    <span style={{ fontSize: windowWidth < 1024 ? '20px' : 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#111827', lineHeight: 1 }}>
                         {Number(stats.totalSponsors).toLocaleString()}
                     </span>
                     <span style={{ color: '#9ca3af', fontSize: 'clamp(9px, 1.25vw, 24px)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{dt.spender}</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(2px, 0.3vw, 6px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(12px, 2.08vw, 40px)', background: '#f0fdf4', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #bbf7d0', flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(2px, 0.3vw, 6px)', padding: 'clamp(8px, 1.25vw, 24px) clamp(8px, 2.08vw, 40px)', background: '#f0fdf4', borderRadius: 'clamp(10px, 1.46vw, 28px)', border: '2px solid #bbf7d0', flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.6vw, 12px)' }}>
                         <Euro size={S(28)} style={{ color: '#10b981' }} />
-                        <span style={{ fontSize: 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
+                        <span style={{ fontSize: windowWidth < 1024 ? '20px' : 'clamp(28px, 5.2vw, 100px)', fontWeight: 900, color: '#065f46', lineHeight: 1 }}>
                             {donationTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                     </div>

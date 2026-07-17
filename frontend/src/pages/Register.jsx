@@ -486,8 +486,8 @@ const Register = () => {
                                 <img src="/logo_white_bg.png" alt="IZS Logo" className="w-20 h-20 sm:w-28 sm:h-28 object-contain"
                                     onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:18px;font-weight:900;color:#fff">IZS</span>'; }} />
                             </div>
-                            <div className="flex-1 min-w-0 flex flex-col items-end gap-2.5 sm:gap-3">
-                                <div className="inline-block px-3.5 py-1.5 bg-white/10 rounded-full text-[11px] sm:text-xs font-bold tracking-[0.12em] sm:tracking-[0.15em] uppercase border border-white/15 whitespace-nowrap leading-tight">
+                            <div className="@container flex-1 min-w-0 flex flex-col items-end gap-2.5 sm:gap-3">
+                                <div className="inline-block px-2 py-1 sm:px-3.5 sm:py-1.5 bg-white/10 rounded-full text-[clamp(9px,5.8cqw,12px)] sm:text-xs font-bold tracking-normal sm:tracking-[0.15em] uppercase border border-white/15 whitespace-nowrap leading-tight">
                                     {t.badge}
                                 </div>
                                 <div className="flex items-center gap-2 sm:gap-2.5">
