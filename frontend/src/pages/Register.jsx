@@ -586,7 +586,7 @@ const Register = () => {
 
                             {/* Name */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.nameLabel}</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.nameLabel}<span className="text-red-500 ml-0.5">*</span></label>
                                 <div className="relative group">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#1a6b3c] transition-colors" />
                                     <input
@@ -602,7 +602,7 @@ const Register = () => {
                             {/* Email + Phone */}
                             <div className="grid grid-cols-1 gap-5">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.emailLabel}</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.emailLabel}<span className="text-red-500 ml-0.5">*</span></label>
                                     <div className="relative group">
                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#1a6b3c] transition-colors" />
                                         <input
@@ -695,7 +695,7 @@ const Register = () => {
                                     <span className="font-bold uppercase tracking-widest text-[10px]">{t.paymentHeader}</span>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.ibanLabel}</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">{t.ibanLabel}<span className="text-red-500 ml-0.5">*</span></label>
                                     <input type="text" required
                                         className={`w-full bg-gray-50 border-2 ${fieldErrors.iban ? 'border-red-400' : 'border-transparent focus:border-[#1a6b3c] focus:bg-white'} rounded-xl py-4 px-4 outline-none transition-all font-bold tracking-widest uppercase text-[#0c151a]`}
                                         placeholder={t.ibanPlaceholder}
@@ -728,7 +728,7 @@ const Register = () => {
                                         <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                                     </div>
                                     <span className={`text-[11px] font-medium leading-relaxed ${fieldErrors.notice_understood ? 'text-red-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
-                                        {t.noticeLabel}
+                                        {t.noticeLabel}<span className="text-red-500 ml-0.5">*</span>
                                     </span>
                                 </label>
 
@@ -742,7 +742,7 @@ const Register = () => {
                                         <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                                     </div>
                                     <span className={`text-[11px] font-medium leading-relaxed ${fieldErrors.mandate_accepted ? 'text-red-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
-                                        {t.mandateLabel}
+                                        {t.mandateLabel}<span className="text-red-500 ml-0.5">*</span>
                                     </span>
                                 </label>
                             </div>
