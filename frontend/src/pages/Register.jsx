@@ -241,7 +241,7 @@ const Register = () => {
         let msg = '';
         if (!cleanName || cleanName.length < 2) { errors.full_name = true; msg = msg || t.validNameErr; }
         if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { errors.email = true; msg = msg || t.validEmailErr; }
-        if (formData.inputMode === 'euro' && euroValue <= 1) { errors.monthlyEuro = true; msg = msg || t.euroMinErr; }
+        if (formData.inputMode === 'euro' && euroValue < 1) { errors.monthlyEuro = true; msg = msg || t.euroMinErr; }
         if (!validateIBAN(cleanIban)) { errors.iban = true; msg = msg || t.validIbanErr; }
         if (!formData.notice_understood) { errors.notice_understood = true; msg = msg || t.noticeErr; }
         if (!formData.mandate_accepted) { errors.mandate_accepted = true; msg = msg || t.mandateErr; }
